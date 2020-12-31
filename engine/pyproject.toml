@@ -15,6 +15,7 @@ pytest = "^5.2"
 black = "^19.10b0"
 flake8 = "^3.8.3"
 grpcio-tools = "^1.31.0"
+ipython = "^7.19.0"
 
 [tool.poetry.scripts]
 main = 'engine.cli:main'

@@ -18,15 +18,123 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='santaka.proto',
   package='santaka',
   syntax='proto3',
-  serialized_options=b'Z\'github.com/akita8/santaka/backend/proto',
+  serialized_options=b'Z$github.com/akita8/santaka/backend/pb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\rsantaka.proto\x12\x07santaka\x1a\x1bgoogle/protobuf/empty.proto2B\n\x06Pinger\x12\x38\n\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x42)Z\'github.com/akita8/santaka/backend/protob\x06proto3'
+  serialized_pb=b'\n\rsantaka.proto\x12\x07santaka\x1a\x1bgoogle/protobuf/empty.proto\"n\n\x16StockDifferenceRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12\x12\n\nlast_price\x18\x03 \x01(\x01\x12\x0b\n\x03tax\x18\x04 \x01(\x01\x12\x12\n\ncommission\x18\x05 \x01(\x01\"-\n\x17StockDifferenceResponse\x12\x12\n\ndifference\x18\x01 \x01(\x01\x32\x42\n\x06Pinger\x12\x38\n\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x32r\n\x16StockDifferenceService\x12X\n\x13\x43\x61lculateDifference\x12\x1f.santaka.StockDifferenceRequest\x1a .santaka.StockDifferenceResponseB&Z$github.com/akita8/santaka/backend/pbb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,])
 
 
 
+
+_STOCKDIFFERENCEREQUEST = _descriptor.Descriptor(
+  name='StockDifferenceRequest',
+  full_name='santaka.StockDifferenceRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='price', full_name='santaka.StockDifferenceRequest.price', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='quantity', full_name='santaka.StockDifferenceRequest.quantity', index=1,
+      number=2, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='last_price', full_name='santaka.StockDifferenceRequest.last_price', index=2,
+      number=3, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='tax', full_name='santaka.StockDifferenceRequest.tax', index=3,
+      number=4, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='commission', full_name='santaka.StockDifferenceRequest.commission', index=4,
+      number=5, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=55,
+  serialized_end=165,
+)
+
+
+_STOCKDIFFERENCERESPONSE = _descriptor.Descriptor(
+  name='StockDifferenceResponse',
+  full_name='santaka.StockDifferenceResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='difference', full_name='santaka.StockDifferenceResponse.difference', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=167,
+  serialized_end=212,
+)
+
+DESCRIPTOR.message_types_by_name['StockDifferenceRequest'] = _STOCKDIFFERENCEREQUEST
+DESCRIPTOR.message_types_by_name['StockDifferenceResponse'] = _STOCKDIFFERENCERESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
+
+StockDifferenceRequest = _reflection.GeneratedProtocolMessageType('StockDifferenceRequest', (_message.Message,), {
+  'DESCRIPTOR' : _STOCKDIFFERENCEREQUEST,
+  '__module__' : 'santaka_pb2'
+  # @@protoc_insertion_point(class_scope:santaka.StockDifferenceRequest)
+  })
+_sym_db.RegisterMessage(StockDifferenceRequest)
+
+StockDifferenceResponse = _reflection.GeneratedProtocolMessageType('StockDifferenceResponse', (_message.Message,), {
+  'DESCRIPTOR' : _STOCKDIFFERENCERESPONSE,
+  '__module__' : 'santaka_pb2'
+  # @@protoc_insertion_point(class_scope:santaka.StockDifferenceResponse)
+  })
+_sym_db.RegisterMessage(StockDifferenceResponse)
 
 
 DESCRIPTOR._options = None
@@ -38,8 +146,8 @@ _PINGER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=55,
-  serialized_end=121,
+  serialized_start=214,
+  serialized_end=280,
   methods=[
   _descriptor.MethodDescriptor(
     name='Ping',
@@ -55,5 +163,31 @@ _PINGER = _descriptor.ServiceDescriptor(
 _sym_db.RegisterServiceDescriptor(_PINGER)
 
 DESCRIPTOR.services_by_name['Pinger'] = _PINGER
+
+
+_STOCKDIFFERENCESERVICE = _descriptor.ServiceDescriptor(
+  name='StockDifferenceService',
+  full_name='santaka.StockDifferenceService',
+  file=DESCRIPTOR,
+  index=1,
+  serialized_options=None,
+  create_key=_descriptor._internal_create_key,
+  serialized_start=282,
+  serialized_end=396,
+  methods=[
+  _descriptor.MethodDescriptor(
+    name='CalculateDifference',
+    full_name='santaka.StockDifferenceService.CalculateDifference',
+    index=0,
+    containing_service=None,
+    input_type=_STOCKDIFFERENCEREQUEST,
+    output_type=_STOCKDIFFERENCERESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+])
+_sym_db.RegisterServiceDescriptor(_STOCKDIFFERENCESERVICE)
+
+DESCRIPTOR.services_by_name['StockDifferenceService'] = _STOCKDIFFERENCESERVICE
 
 # @@protoc_insertion_point(module_scope)

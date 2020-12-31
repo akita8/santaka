@@ -4,6 +4,8 @@ import logging
 
 import engine.santaka_pb2_grpc as santaka_grpc
 
+from engine.stock import StockDifferenceService
+
 
 class Pinger(santaka_grpc.PingerServicer):
     def __init__(self, logger, *args, **kwargs):
@@ -17,6 +19,10 @@ class Pinger(santaka_grpc.PingerServicer):
 
 def add_grpc_services(server, logger):
     santaka_grpc.add_PingerServicer_to_server(Pinger(logger), server)
+    santaka_grpc.add_StockDifferenceServiceServicer_to_server(
+        StockDifferenceService(logger),
+        server
+    )
 
 
 def setup_logger(level: str) -> logging.Logger:

@@ -9,3 +9,19 @@ option go_package = "github.com/akita8/santaka/backend/pb";
 service Pinger {
   rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
+
+message StockDifferenceRequest{
+  double price = 1;
+  int64 quantity = 2;
+  double last_price = 3;
+  double tax = 4;
+  double commission = 5;
+}
+
+message StockDifferenceResponse{
+  double difference = 1; 
+}
+
+service StockDifferenceService{
+  rpc CalculateDifference(StockDifferenceRequest) returns (StockDifferenceResponse);
+}

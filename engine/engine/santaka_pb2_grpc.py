@@ -3,6 +3,7 @@
 import grpc
 
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
+import engine.santaka_pb2 as santaka__pb2
 
 
 class PingerStub(object):
@@ -62,5 +63,66 @@ class Pinger(object):
         return grpc.experimental.unary_unary(request, target, '/santaka.Pinger/Ping',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class StockDifferenceServiceStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.CalculateDifference = channel.unary_unary(
+                '/santaka.StockDifferenceService/CalculateDifference',
+                request_serializer=santaka__pb2.StockDifferenceRequest.SerializeToString,
+                response_deserializer=santaka__pb2.StockDifferenceResponse.FromString,
+                )
+
+
+class StockDifferenceServiceServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def CalculateDifference(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_StockDifferenceServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'CalculateDifference': grpc.unary_unary_rpc_method_handler(
+                    servicer.CalculateDifference,
+                    request_deserializer=santaka__pb2.StockDifferenceRequest.FromString,
+                    response_serializer=santaka__pb2.StockDifferenceResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'santaka.StockDifferenceService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class StockDifferenceService(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def CalculateDifference(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/santaka.StockDifferenceService/CalculateDifference',
+            santaka__pb2.StockDifferenceRequest.SerializeToString,
+            santaka__pb2.StockDifferenceResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
