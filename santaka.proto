@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package santaka;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/akita8/santaka/backend/pb";
+
+service Pinger {
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
