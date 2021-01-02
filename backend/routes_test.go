@@ -30,7 +30,7 @@ func TestHandlePingSuccess(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", w.Code)
 	}
-	responseBody := string(w.Body.Bytes())
+	responseBody := w.Body.String()
 	if responseBody != pingResponseBody {
 		t.Errorf("expected %s, got %s", pingResponseBody, responseBody)
 	}
