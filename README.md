@@ -15,11 +15,9 @@ protoc --proto_path=.. --go_out=pb --go-grpc_out=pb --go-grpc_opt=paths=source_r
 
 
 ### Engine
-
+After editing santaka.proto file run the following code to generate protobuf interfaces in engine directory: 
 ```bash
-cd engine
-poetry shell
-python -m grpc_tools.protoc -I.. --python_out=engine --grpc_python_out=engine ../santaka.proto
+poetry run python -m grpc_tools.protoc -I.. --python_out=engine --grpc_python_out=engine ../santaka.proto
 ```
 
 Warning: after compiling santaka.proto change import path in santaka_pb2_grpc from `import santaka_pb2 as santaka__pb2` to `import engine.santaka_pb2 as santaka__pb2`.

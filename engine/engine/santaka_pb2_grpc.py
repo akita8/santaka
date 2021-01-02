@@ -126,3 +126,97 @@ class StockDifferenceService(object):
             santaka__pb2.StockDifferenceResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class StockAlertServiceStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.CheckPrice = channel.unary_unary(
+                '/santaka.StockAlertService/CheckPrice',
+                request_serializer=santaka__pb2.StockPriceAlertRequest.SerializeToString,
+                response_deserializer=santaka__pb2.StockAlertResponse.FromString,
+                )
+        self.CheckExpiration = channel.unary_unary(
+                '/santaka.StockAlertService/CheckExpiration',
+                request_serializer=santaka__pb2.StockExpirationAlertRequest.SerializeToString,
+                response_deserializer=santaka__pb2.StockAlertResponse.FromString,
+                )
+
+
+class StockAlertServiceServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def CheckPrice(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CheckExpiration(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_StockAlertServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'CheckPrice': grpc.unary_unary_rpc_method_handler(
+                    servicer.CheckPrice,
+                    request_deserializer=santaka__pb2.StockPriceAlertRequest.FromString,
+                    response_serializer=santaka__pb2.StockAlertResponse.SerializeToString,
+            ),
+            'CheckExpiration': grpc.unary_unary_rpc_method_handler(
+                    servicer.CheckExpiration,
+                    request_deserializer=santaka__pb2.StockExpirationAlertRequest.FromString,
+                    response_serializer=santaka__pb2.StockAlertResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'santaka.StockAlertService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class StockAlertService(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def CheckPrice(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/santaka.StockAlertService/CheckPrice',
+            santaka__pb2.StockPriceAlertRequest.SerializeToString,
+            santaka__pb2.StockAlertResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CheckExpiration(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/santaka.StockAlertService/CheckExpiration',
+            santaka__pb2.StockExpirationAlertRequest.SerializeToString,
+            santaka__pb2.StockAlertResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

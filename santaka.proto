@@ -10,18 +10,55 @@ service Pinger {
   rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
 
+message Error{
+  string message = 1;
+}
+
+message Commission{
+  double on_buy = 1;
+  double on_sell = 2;
+}
+
 message StockDifferenceRequest{
   double price = 1;
   int64 quantity = 2;
   double last_price = 3;
   double tax = 4;
-  double commission = 5;
+  Commission commission = 5;
 }
 
 message StockDifferenceResponse{
   double difference = 1; 
+  Error error = 2;
 }
 
 service StockDifferenceService{
   rpc CalculateDifference(StockDifferenceRequest) returns (StockDifferenceResponse);
+}
+
+enum Operation{
+  NOP = 0;
+  BUY = 1;
+  SELL = 2;
+}
+
+message StockPriceAlertRequest{
+  double price = 1;
+  double last_price = 2;
+  Operation operation = 3;
+}
+
+message StockExpirationAlertRequest{
+  int64 expiration_date = 1;
+  int64 current_date = 2;
+}
+
+message StockAlertResponse{
+  string message = 1;
+  Error error = 2;
+}
+
+service StockAlertService{
+  rpc CheckPrice(StockPriceAlertRequest) returns (StockAlertResponse);
+  rpc CheckExpiration(StockExpirationAlertRequest) returns (StockAlertResponse);
 }
