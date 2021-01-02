@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z$github.com/akita8/santaka/backend/pb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\rsantaka.proto\x12\x07santaka\x1a\x1bgoogle/protobuf/empty.proto\"\x18\n\x05\x45rror\x12\x0f\n\x07message\x18\x01 \x01(\t\"-\n\nCommission\x12\x0e\n\x06on_buy\x18\x01 \x01(\x01\x12\x0f\n\x07on_sell\x18\x02 \x01(\x01\"\x83\x01\n\x16StockDifferenceRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12\x12\n\nlast_price\x18\x03 \x01(\x01\x12\x0b\n\x03tax\x18\x04 \x01(\x01\x12\'\n\ncommission\x18\x05 \x01(\x0b\x32\x13.santaka.Commission\"L\n\x17StockDifferenceResponse\x12\x12\n\ndifference\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error\"b\n\x16StockPriceAlertRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x12\n\nlast_price\x18\x02 \x01(\x01\x12%\n\toperation\x18\x03 \x01(\x0e\x32\x12.santaka.Operation\"L\n\x1bStockExpirationAlertRequest\x12\x17\n\x0f\x65xpiration_date\x18\x01 \x01(\x03\x12\x14\n\x0c\x63urrent_date\x18\x02 \x01(\x03\"D\n\x12StockAlertResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error*\'\n\tOperation\x12\x07\n\x03NOP\x10\x00\x12\x07\n\x03\x42UY\x10\x01\x12\x08\n\x04SELL\x10\x02\x32\x42\n\x06Pinger\x12\x38\n\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x32r\n\x16StockDifferenceService\x12X\n\x13\x43\x61lculateDifference\x12\x1f.santaka.StockDifferenceRequest\x1a .santaka.StockDifferenceResponse2\xb5\x01\n\x11StockAlertService\x12J\n\nCheckPrice\x12\x1f.santaka.StockPriceAlertRequest\x1a\x1b.santaka.StockAlertResponse\x12T\n\x0f\x43heckExpiration\x12$.santaka.StockExpirationAlertRequest\x1a\x1b.santaka.StockAlertResponseB&Z$github.com/akita8/santaka/backend/pbb\x06proto3'
+  serialized_pb=b'\n\rsantaka.proto\x12\x07santaka\x1a\x1bgoogle/protobuf/empty.proto\"\x18\n\x05\x45rror\x12\x0f\n\x07message\x18\x01 \x01(\t\"-\n\nCommission\x12\x0e\n\x06on_buy\x18\x01 \x01(\x01\x12\x0f\n\x07on_sell\x18\x02 \x01(\x01\"~\n\x11\x44ifferenceRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12\x12\n\nlast_price\x18\x03 \x01(\x01\x12\x0b\n\x03tax\x18\x04 \x01(\x01\x12\'\n\ncommission\x18\x05 \x01(\x0b\x32\x13.santaka.Commission\"G\n\x12\x44ifferenceResponse\x12\x12\n\ndifference\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error\"]\n\x11PriceAlertRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x12\n\nlast_price\x18\x02 \x01(\x01\x12%\n\toperation\x18\x03 \x01(\x0e\x32\x12.santaka.Operation\"G\n\x16\x45xpirationAlertRequest\x12\x17\n\x0f\x65xpiration_date\x18\x01 \x01(\x03\x12\x14\n\x0c\x63urrent_date\x18\x02 \x01(\x03\"?\n\rAlertResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error\"\x95\x01\n\x12\x43ouponYieldRequest\x12\x15\n\rmaturity_date\x18\x01 \x01(\x03\x12\x18\n\x10next_coupon_rate\x18\x02 \x01(\x01\x12\r\n\x05price\x18\x03 \x01(\x01\x12\x10\n\x08invested\x18\x04 \x01(\x01\x12\x17\n\x0fnext_coupon_tax\x18\x05 \x01(\x01\x12\x14\n\x0c\x63urrent_date\x18\x06 \x01(\x03\"J\n\x13\x43ouponYieldResponse\x12\x14\n\x0c\x63oupon_yield\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error*\'\n\tOperation\x12\x07\n\x03NOP\x10\x00\x12\x07\n\x03\x42UY\x10\x01\x12\x08\n\x04SELL\x10\x02\x32\x42\n\x06Pinger\x12\x38\n\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x32\xbc\x01\n\x11\x44ifferenceService\x12S\n\x18\x43\x61lculateStockDifference\x12\x1a.santaka.DifferenceRequest\x1a\x1b.santaka.DifferenceResponse\x12R\n\x17\x43\x61lculateBondDifference\x12\x1a.santaka.DifferenceRequest\x1a\x1b.santaka.DifferenceResponse2\x9c\x01\n\x0c\x41lertService\x12@\n\nCheckPrice\x12\x1a.santaka.PriceAlertRequest\x1a\x16.santaka.AlertResponse\x12J\n\x0f\x43heckExpiration\x12\x1f.santaka.ExpirationAlertRequest\x1a\x16.santaka.AlertResponse2g\n\x12\x43ouponYieldService\x12Q\n\x14\x43\x61lculateCouponYield\x12\x1b.santaka.CouponYieldRequest\x1a\x1c.santaka.CouponYieldResponseB&Z$github.com/akita8/santaka/backend/pbb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,])
 
@@ -50,8 +50,8 @@ _OPERATION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=588,
-  serialized_end=627,
+  serialized_start=790,
+  serialized_end=829,
 )
 _sym_db.RegisterEnumDescriptor(_OPERATION)
 
@@ -133,44 +133,44 @@ _COMMISSION = _descriptor.Descriptor(
 )
 
 
-_STOCKDIFFERENCEREQUEST = _descriptor.Descriptor(
-  name='StockDifferenceRequest',
-  full_name='santaka.StockDifferenceRequest',
+_DIFFERENCEREQUEST = _descriptor.Descriptor(
+  name='DifferenceRequest',
+  full_name='santaka.DifferenceRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='price', full_name='santaka.StockDifferenceRequest.price', index=0,
+      name='price', full_name='santaka.DifferenceRequest.price', index=0,
       number=1, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='quantity', full_name='santaka.StockDifferenceRequest.quantity', index=1,
+      name='quantity', full_name='santaka.DifferenceRequest.quantity', index=1,
       number=2, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='last_price', full_name='santaka.StockDifferenceRequest.last_price', index=2,
+      name='last_price', full_name='santaka.DifferenceRequest.last_price', index=2,
       number=3, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='tax', full_name='santaka.StockDifferenceRequest.tax', index=3,
+      name='tax', full_name='santaka.DifferenceRequest.tax', index=3,
       number=4, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='commission', full_name='santaka.StockDifferenceRequest.commission', index=4,
+      name='commission', full_name='santaka.DifferenceRequest.commission', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -188,28 +188,28 @@ _STOCKDIFFERENCEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=129,
-  serialized_end=260,
+  serialized_start=128,
+  serialized_end=254,
 )
 
 
-_STOCKDIFFERENCERESPONSE = _descriptor.Descriptor(
-  name='StockDifferenceResponse',
-  full_name='santaka.StockDifferenceResponse',
+_DIFFERENCERESPONSE = _descriptor.Descriptor(
+  name='DifferenceResponse',
+  full_name='santaka.DifferenceResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='difference', full_name='santaka.StockDifferenceResponse.difference', index=0,
+      name='difference', full_name='santaka.DifferenceResponse.difference', index=0,
       number=1, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='error', full_name='santaka.StockDifferenceResponse.error', index=1,
+      name='error', full_name='santaka.DifferenceResponse.error', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -227,35 +227,35 @@ _STOCKDIFFERENCERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=262,
-  serialized_end=338,
+  serialized_start=256,
+  serialized_end=327,
 )
 
 
-_STOCKPRICEALERTREQUEST = _descriptor.Descriptor(
-  name='StockPriceAlertRequest',
-  full_name='santaka.StockPriceAlertRequest',
+_PRICEALERTREQUEST = _descriptor.Descriptor(
+  name='PriceAlertRequest',
+  full_name='santaka.PriceAlertRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='price', full_name='santaka.StockPriceAlertRequest.price', index=0,
+      name='price', full_name='santaka.PriceAlertRequest.price', index=0,
       number=1, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='last_price', full_name='santaka.StockPriceAlertRequest.last_price', index=1,
+      name='last_price', full_name='santaka.PriceAlertRequest.last_price', index=1,
       number=2, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='operation', full_name='santaka.StockPriceAlertRequest.operation', index=2,
+      name='operation', full_name='santaka.PriceAlertRequest.operation', index=2,
       number=3, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -273,28 +273,28 @@ _STOCKPRICEALERTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=340,
-  serialized_end=438,
+  serialized_start=329,
+  serialized_end=422,
 )
 
 
-_STOCKEXPIRATIONALERTREQUEST = _descriptor.Descriptor(
-  name='StockExpirationAlertRequest',
-  full_name='santaka.StockExpirationAlertRequest',
+_EXPIRATIONALERTREQUEST = _descriptor.Descriptor(
+  name='ExpirationAlertRequest',
+  full_name='santaka.ExpirationAlertRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='expiration_date', full_name='santaka.StockExpirationAlertRequest.expiration_date', index=0,
+      name='expiration_date', full_name='santaka.ExpirationAlertRequest.expiration_date', index=0,
       number=1, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='current_date', full_name='santaka.StockExpirationAlertRequest.current_date', index=1,
+      name='current_date', full_name='santaka.ExpirationAlertRequest.current_date', index=1,
       number=2, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -312,28 +312,28 @@ _STOCKEXPIRATIONALERTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=440,
-  serialized_end=516,
+  serialized_start=424,
+  serialized_end=495,
 )
 
 
-_STOCKALERTRESPONSE = _descriptor.Descriptor(
-  name='StockAlertResponse',
-  full_name='santaka.StockAlertResponse',
+_ALERTRESPONSE = _descriptor.Descriptor(
+  name='AlertResponse',
+  full_name='santaka.AlertResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='message', full_name='santaka.StockAlertResponse.message', index=0,
+      name='message', full_name='santaka.AlertResponse.message', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='error', full_name='santaka.StockAlertResponse.error', index=1,
+      name='error', full_name='santaka.AlertResponse.error', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -351,21 +351,130 @@ _STOCKALERTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=518,
-  serialized_end=586,
+  serialized_start=497,
+  serialized_end=560,
 )
 
-_STOCKDIFFERENCEREQUEST.fields_by_name['commission'].message_type = _COMMISSION
-_STOCKDIFFERENCERESPONSE.fields_by_name['error'].message_type = _ERROR
-_STOCKPRICEALERTREQUEST.fields_by_name['operation'].enum_type = _OPERATION
-_STOCKALERTRESPONSE.fields_by_name['error'].message_type = _ERROR
+
+_COUPONYIELDREQUEST = _descriptor.Descriptor(
+  name='CouponYieldRequest',
+  full_name='santaka.CouponYieldRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='maturity_date', full_name='santaka.CouponYieldRequest.maturity_date', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='next_coupon_rate', full_name='santaka.CouponYieldRequest.next_coupon_rate', index=1,
+      number=2, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='price', full_name='santaka.CouponYieldRequest.price', index=2,
+      number=3, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='invested', full_name='santaka.CouponYieldRequest.invested', index=3,
+      number=4, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='next_coupon_tax', full_name='santaka.CouponYieldRequest.next_coupon_tax', index=4,
+      number=5, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='current_date', full_name='santaka.CouponYieldRequest.current_date', index=5,
+      number=6, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=563,
+  serialized_end=712,
+)
+
+
+_COUPONYIELDRESPONSE = _descriptor.Descriptor(
+  name='CouponYieldResponse',
+  full_name='santaka.CouponYieldResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='coupon_yield', full_name='santaka.CouponYieldResponse.coupon_yield', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='error', full_name='santaka.CouponYieldResponse.error', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=714,
+  serialized_end=788,
+)
+
+_DIFFERENCEREQUEST.fields_by_name['commission'].message_type = _COMMISSION
+_DIFFERENCERESPONSE.fields_by_name['error'].message_type = _ERROR
+_PRICEALERTREQUEST.fields_by_name['operation'].enum_type = _OPERATION
+_ALERTRESPONSE.fields_by_name['error'].message_type = _ERROR
+_COUPONYIELDRESPONSE.fields_by_name['error'].message_type = _ERROR
 DESCRIPTOR.message_types_by_name['Error'] = _ERROR
 DESCRIPTOR.message_types_by_name['Commission'] = _COMMISSION
-DESCRIPTOR.message_types_by_name['StockDifferenceRequest'] = _STOCKDIFFERENCEREQUEST
-DESCRIPTOR.message_types_by_name['StockDifferenceResponse'] = _STOCKDIFFERENCERESPONSE
-DESCRIPTOR.message_types_by_name['StockPriceAlertRequest'] = _STOCKPRICEALERTREQUEST
-DESCRIPTOR.message_types_by_name['StockExpirationAlertRequest'] = _STOCKEXPIRATIONALERTREQUEST
-DESCRIPTOR.message_types_by_name['StockAlertResponse'] = _STOCKALERTRESPONSE
+DESCRIPTOR.message_types_by_name['DifferenceRequest'] = _DIFFERENCEREQUEST
+DESCRIPTOR.message_types_by_name['DifferenceResponse'] = _DIFFERENCERESPONSE
+DESCRIPTOR.message_types_by_name['PriceAlertRequest'] = _PRICEALERTREQUEST
+DESCRIPTOR.message_types_by_name['ExpirationAlertRequest'] = _EXPIRATIONALERTREQUEST
+DESCRIPTOR.message_types_by_name['AlertResponse'] = _ALERTRESPONSE
+DESCRIPTOR.message_types_by_name['CouponYieldRequest'] = _COUPONYIELDREQUEST
+DESCRIPTOR.message_types_by_name['CouponYieldResponse'] = _COUPONYIELDRESPONSE
 DESCRIPTOR.enum_types_by_name['Operation'] = _OPERATION
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -383,40 +492,54 @@ Commission = _reflection.GeneratedProtocolMessageType('Commission', (_message.Me
   })
 _sym_db.RegisterMessage(Commission)
 
-StockDifferenceRequest = _reflection.GeneratedProtocolMessageType('StockDifferenceRequest', (_message.Message,), {
-  'DESCRIPTOR' : _STOCKDIFFERENCEREQUEST,
+DifferenceRequest = _reflection.GeneratedProtocolMessageType('DifferenceRequest', (_message.Message,), {
+  'DESCRIPTOR' : _DIFFERENCEREQUEST,
   '__module__' : 'santaka_pb2'
-  # @@protoc_insertion_point(class_scope:santaka.StockDifferenceRequest)
+  # @@protoc_insertion_point(class_scope:santaka.DifferenceRequest)
   })
-_sym_db.RegisterMessage(StockDifferenceRequest)
+_sym_db.RegisterMessage(DifferenceRequest)
 
-StockDifferenceResponse = _reflection.GeneratedProtocolMessageType('StockDifferenceResponse', (_message.Message,), {
-  'DESCRIPTOR' : _STOCKDIFFERENCERESPONSE,
+DifferenceResponse = _reflection.GeneratedProtocolMessageType('DifferenceResponse', (_message.Message,), {
+  'DESCRIPTOR' : _DIFFERENCERESPONSE,
   '__module__' : 'santaka_pb2'
-  # @@protoc_insertion_point(class_scope:santaka.StockDifferenceResponse)
+  # @@protoc_insertion_point(class_scope:santaka.DifferenceResponse)
   })
-_sym_db.RegisterMessage(StockDifferenceResponse)
+_sym_db.RegisterMessage(DifferenceResponse)
 
-StockPriceAlertRequest = _reflection.GeneratedProtocolMessageType('StockPriceAlertRequest', (_message.Message,), {
-  'DESCRIPTOR' : _STOCKPRICEALERTREQUEST,
+PriceAlertRequest = _reflection.GeneratedProtocolMessageType('PriceAlertRequest', (_message.Message,), {
+  'DESCRIPTOR' : _PRICEALERTREQUEST,
   '__module__' : 'santaka_pb2'
-  # @@protoc_insertion_point(class_scope:santaka.StockPriceAlertRequest)
+  # @@protoc_insertion_point(class_scope:santaka.PriceAlertRequest)
   })
-_sym_db.RegisterMessage(StockPriceAlertRequest)
+_sym_db.RegisterMessage(PriceAlertRequest)
 
-StockExpirationAlertRequest = _reflection.GeneratedProtocolMessageType('StockExpirationAlertRequest', (_message.Message,), {
-  'DESCRIPTOR' : _STOCKEXPIRATIONALERTREQUEST,
+ExpirationAlertRequest = _reflection.GeneratedProtocolMessageType('ExpirationAlertRequest', (_message.Message,), {
+  'DESCRIPTOR' : _EXPIRATIONALERTREQUEST,
   '__module__' : 'santaka_pb2'
-  # @@protoc_insertion_point(class_scope:santaka.StockExpirationAlertRequest)
+  # @@protoc_insertion_point(class_scope:santaka.ExpirationAlertRequest)
   })
-_sym_db.RegisterMessage(StockExpirationAlertRequest)
+_sym_db.RegisterMessage(ExpirationAlertRequest)
 
-StockAlertResponse = _reflection.GeneratedProtocolMessageType('StockAlertResponse', (_message.Message,), {
-  'DESCRIPTOR' : _STOCKALERTRESPONSE,
+AlertResponse = _reflection.GeneratedProtocolMessageType('AlertResponse', (_message.Message,), {
+  'DESCRIPTOR' : _ALERTRESPONSE,
   '__module__' : 'santaka_pb2'
-  # @@protoc_insertion_point(class_scope:santaka.StockAlertResponse)
+  # @@protoc_insertion_point(class_scope:santaka.AlertResponse)
   })
-_sym_db.RegisterMessage(StockAlertResponse)
+_sym_db.RegisterMessage(AlertResponse)
+
+CouponYieldRequest = _reflection.GeneratedProtocolMessageType('CouponYieldRequest', (_message.Message,), {
+  'DESCRIPTOR' : _COUPONYIELDREQUEST,
+  '__module__' : 'santaka_pb2'
+  # @@protoc_insertion_point(class_scope:santaka.CouponYieldRequest)
+  })
+_sym_db.RegisterMessage(CouponYieldRequest)
+
+CouponYieldResponse = _reflection.GeneratedProtocolMessageType('CouponYieldResponse', (_message.Message,), {
+  'DESCRIPTOR' : _COUPONYIELDRESPONSE,
+  '__module__' : 'santaka_pb2'
+  # @@protoc_insertion_point(class_scope:santaka.CouponYieldResponse)
+  })
+_sym_db.RegisterMessage(CouponYieldResponse)
 
 
 DESCRIPTOR._options = None
@@ -428,8 +551,8 @@ _PINGER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=629,
-  serialized_end=695,
+  serialized_start=831,
+  serialized_end=897,
   methods=[
   _descriptor.MethodDescriptor(
     name='Ping',
@@ -447,65 +570,101 @@ _sym_db.RegisterServiceDescriptor(_PINGER)
 DESCRIPTOR.services_by_name['Pinger'] = _PINGER
 
 
-_STOCKDIFFERENCESERVICE = _descriptor.ServiceDescriptor(
-  name='StockDifferenceService',
-  full_name='santaka.StockDifferenceService',
+_DIFFERENCESERVICE = _descriptor.ServiceDescriptor(
+  name='DifferenceService',
+  full_name='santaka.DifferenceService',
   file=DESCRIPTOR,
   index=1,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=697,
-  serialized_end=811,
+  serialized_start=900,
+  serialized_end=1088,
   methods=[
   _descriptor.MethodDescriptor(
-    name='CalculateDifference',
-    full_name='santaka.StockDifferenceService.CalculateDifference',
+    name='CalculateStockDifference',
+    full_name='santaka.DifferenceService.CalculateStockDifference',
     index=0,
     containing_service=None,
-    input_type=_STOCKDIFFERENCEREQUEST,
-    output_type=_STOCKDIFFERENCERESPONSE,
+    input_type=_DIFFERENCEREQUEST,
+    output_type=_DIFFERENCERESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='CalculateBondDifference',
+    full_name='santaka.DifferenceService.CalculateBondDifference',
+    index=1,
+    containing_service=None,
+    input_type=_DIFFERENCEREQUEST,
+    output_type=_DIFFERENCERESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
 ])
-_sym_db.RegisterServiceDescriptor(_STOCKDIFFERENCESERVICE)
+_sym_db.RegisterServiceDescriptor(_DIFFERENCESERVICE)
 
-DESCRIPTOR.services_by_name['StockDifferenceService'] = _STOCKDIFFERENCESERVICE
+DESCRIPTOR.services_by_name['DifferenceService'] = _DIFFERENCESERVICE
 
 
-_STOCKALERTSERVICE = _descriptor.ServiceDescriptor(
-  name='StockAlertService',
-  full_name='santaka.StockAlertService',
+_ALERTSERVICE = _descriptor.ServiceDescriptor(
+  name='AlertService',
+  full_name='santaka.AlertService',
   file=DESCRIPTOR,
   index=2,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=814,
-  serialized_end=995,
+  serialized_start=1091,
+  serialized_end=1247,
   methods=[
   _descriptor.MethodDescriptor(
     name='CheckPrice',
-    full_name='santaka.StockAlertService.CheckPrice',
+    full_name='santaka.AlertService.CheckPrice',
     index=0,
     containing_service=None,
-    input_type=_STOCKPRICEALERTREQUEST,
-    output_type=_STOCKALERTRESPONSE,
+    input_type=_PRICEALERTREQUEST,
+    output_type=_ALERTRESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
     name='CheckExpiration',
-    full_name='santaka.StockAlertService.CheckExpiration',
+    full_name='santaka.AlertService.CheckExpiration',
     index=1,
     containing_service=None,
-    input_type=_STOCKEXPIRATIONALERTREQUEST,
-    output_type=_STOCKALERTRESPONSE,
+    input_type=_EXPIRATIONALERTREQUEST,
+    output_type=_ALERTRESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
 ])
-_sym_db.RegisterServiceDescriptor(_STOCKALERTSERVICE)
+_sym_db.RegisterServiceDescriptor(_ALERTSERVICE)
 
-DESCRIPTOR.services_by_name['StockAlertService'] = _STOCKALERTSERVICE
+DESCRIPTOR.services_by_name['AlertService'] = _ALERTSERVICE
+
+
+_COUPONYIELDSERVICE = _descriptor.ServiceDescriptor(
+  name='CouponYieldService',
+  full_name='santaka.CouponYieldService',
+  file=DESCRIPTOR,
+  index=3,
+  serialized_options=None,
+  create_key=_descriptor._internal_create_key,
+  serialized_start=1249,
+  serialized_end=1352,
+  methods=[
+  _descriptor.MethodDescriptor(
+    name='CalculateCouponYield',
+    full_name='santaka.CouponYieldService.CalculateCouponYield',
+    index=0,
+    containing_service=None,
+    input_type=_COUPONYIELDREQUEST,
+    output_type=_COUPONYIELDRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+])
+_sym_db.RegisterServiceDescriptor(_COUPONYIELDSERVICE)
+
+DESCRIPTOR.services_by_name['CouponYieldService'] = _COUPONYIELDSERVICE
 
 # @@protoc_insertion_point(module_scope)

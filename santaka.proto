@@ -19,7 +19,7 @@ message Commission{
   double on_sell = 2;
 }
 
-message StockDifferenceRequest{
+message DifferenceRequest{
   double price = 1;
   int64 quantity = 2;
   double last_price = 3;
@@ -27,13 +27,14 @@ message StockDifferenceRequest{
   Commission commission = 5;
 }
 
-message StockDifferenceResponse{
+message DifferenceResponse{
   double difference = 1; 
   Error error = 2;
 }
 
-service StockDifferenceService{
-  rpc CalculateDifference(StockDifferenceRequest) returns (StockDifferenceResponse);
+service DifferenceService{
+  rpc CalculateStockDifference(DifferenceRequest) returns (DifferenceResponse);
+  rpc CalculateBondDifference(DifferenceRequest) returns (DifferenceResponse);
 }
 
 enum Operation{
@@ -42,23 +43,41 @@ enum Operation{
   SELL = 2;
 }
 
-message StockPriceAlertRequest{
+message PriceAlertRequest{
   double price = 1;
   double last_price = 2;
   Operation operation = 3;
 }
 
-message StockExpirationAlertRequest{
+message ExpirationAlertRequest{
   int64 expiration_date = 1;
   int64 current_date = 2;
 }
 
-message StockAlertResponse{
+message AlertResponse{
   string message = 1;
   Error error = 2;
 }
 
-service StockAlertService{
-  rpc CheckPrice(StockPriceAlertRequest) returns (StockAlertResponse);
-  rpc CheckExpiration(StockExpirationAlertRequest) returns (StockAlertResponse);
+service AlertService{
+  rpc CheckPrice(PriceAlertRequest) returns (AlertResponse);
+  rpc CheckExpiration(ExpirationAlertRequest) returns (AlertResponse);
 }
+
+message CouponYieldRequest{
+  int64 maturity_date = 1;
+  double next_coupon_rate = 2;
+  double price = 3;
+  double invested = 4;
+  double next_coupon_tax = 5;
+  int64 current_date = 6;
+}
+
+message CouponYieldResponse{
+  double coupon_yield = 1;
+  Error error = 2;
+ }
+
+ service CouponYieldService{
+   rpc CalculateCouponYield(CouponYieldRequest) returns (CouponYieldResponse);
+ }

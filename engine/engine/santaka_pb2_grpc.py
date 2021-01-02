@@ -67,7 +67,7 @@ class Pinger(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
 
-class StockDifferenceServiceStub(object):
+class DifferenceServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -76,42 +76,58 @@ class StockDifferenceServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.CalculateDifference = channel.unary_unary(
-                '/santaka.StockDifferenceService/CalculateDifference',
-                request_serializer=santaka__pb2.StockDifferenceRequest.SerializeToString,
-                response_deserializer=santaka__pb2.StockDifferenceResponse.FromString,
+        self.CalculateStockDifference = channel.unary_unary(
+                '/santaka.DifferenceService/CalculateStockDifference',
+                request_serializer=santaka__pb2.DifferenceRequest.SerializeToString,
+                response_deserializer=santaka__pb2.DifferenceResponse.FromString,
+                )
+        self.CalculateBondDifference = channel.unary_unary(
+                '/santaka.DifferenceService/CalculateBondDifference',
+                request_serializer=santaka__pb2.DifferenceRequest.SerializeToString,
+                response_deserializer=santaka__pb2.DifferenceResponse.FromString,
                 )
 
 
-class StockDifferenceServiceServicer(object):
+class DifferenceServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def CalculateDifference(self, request, context):
+    def CalculateStockDifference(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CalculateBondDifference(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_StockDifferenceServiceServicer_to_server(servicer, server):
+def add_DifferenceServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'CalculateDifference': grpc.unary_unary_rpc_method_handler(
-                    servicer.CalculateDifference,
-                    request_deserializer=santaka__pb2.StockDifferenceRequest.FromString,
-                    response_serializer=santaka__pb2.StockDifferenceResponse.SerializeToString,
+            'CalculateStockDifference': grpc.unary_unary_rpc_method_handler(
+                    servicer.CalculateStockDifference,
+                    request_deserializer=santaka__pb2.DifferenceRequest.FromString,
+                    response_serializer=santaka__pb2.DifferenceResponse.SerializeToString,
+            ),
+            'CalculateBondDifference': grpc.unary_unary_rpc_method_handler(
+                    servicer.CalculateBondDifference,
+                    request_deserializer=santaka__pb2.DifferenceRequest.FromString,
+                    response_serializer=santaka__pb2.DifferenceResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'santaka.StockDifferenceService', rpc_method_handlers)
+            'santaka.DifferenceService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class StockDifferenceService(object):
+class DifferenceService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def CalculateDifference(request,
+    def CalculateStockDifference(request,
             target,
             options=(),
             channel_credentials=None,
@@ -121,14 +137,31 @@ class StockDifferenceService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/santaka.StockDifferenceService/CalculateDifference',
-            santaka__pb2.StockDifferenceRequest.SerializeToString,
-            santaka__pb2.StockDifferenceResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/santaka.DifferenceService/CalculateStockDifference',
+            santaka__pb2.DifferenceRequest.SerializeToString,
+            santaka__pb2.DifferenceResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CalculateBondDifference(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/santaka.DifferenceService/CalculateBondDifference',
+            santaka__pb2.DifferenceRequest.SerializeToString,
+            santaka__pb2.DifferenceResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
 
-class StockAlertServiceStub(object):
+class AlertServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -138,18 +171,18 @@ class StockAlertServiceStub(object):
             channel: A grpc.Channel.
         """
         self.CheckPrice = channel.unary_unary(
-                '/santaka.StockAlertService/CheckPrice',
-                request_serializer=santaka__pb2.StockPriceAlertRequest.SerializeToString,
-                response_deserializer=santaka__pb2.StockAlertResponse.FromString,
+                '/santaka.AlertService/CheckPrice',
+                request_serializer=santaka__pb2.PriceAlertRequest.SerializeToString,
+                response_deserializer=santaka__pb2.AlertResponse.FromString,
                 )
         self.CheckExpiration = channel.unary_unary(
-                '/santaka.StockAlertService/CheckExpiration',
-                request_serializer=santaka__pb2.StockExpirationAlertRequest.SerializeToString,
-                response_deserializer=santaka__pb2.StockAlertResponse.FromString,
+                '/santaka.AlertService/CheckExpiration',
+                request_serializer=santaka__pb2.ExpirationAlertRequest.SerializeToString,
+                response_deserializer=santaka__pb2.AlertResponse.FromString,
                 )
 
 
-class StockAlertServiceServicer(object):
+class AlertServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CheckPrice(self, request, context):
@@ -165,26 +198,26 @@ class StockAlertServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_StockAlertServiceServicer_to_server(servicer, server):
+def add_AlertServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CheckPrice': grpc.unary_unary_rpc_method_handler(
                     servicer.CheckPrice,
-                    request_deserializer=santaka__pb2.StockPriceAlertRequest.FromString,
-                    response_serializer=santaka__pb2.StockAlertResponse.SerializeToString,
+                    request_deserializer=santaka__pb2.PriceAlertRequest.FromString,
+                    response_serializer=santaka__pb2.AlertResponse.SerializeToString,
             ),
             'CheckExpiration': grpc.unary_unary_rpc_method_handler(
                     servicer.CheckExpiration,
-                    request_deserializer=santaka__pb2.StockExpirationAlertRequest.FromString,
-                    response_serializer=santaka__pb2.StockAlertResponse.SerializeToString,
+                    request_deserializer=santaka__pb2.ExpirationAlertRequest.FromString,
+                    response_serializer=santaka__pb2.AlertResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'santaka.StockAlertService', rpc_method_handlers)
+            'santaka.AlertService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class StockAlertService(object):
+class AlertService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -198,9 +231,9 @@ class StockAlertService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/santaka.StockAlertService/CheckPrice',
-            santaka__pb2.StockPriceAlertRequest.SerializeToString,
-            santaka__pb2.StockAlertResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/santaka.AlertService/CheckPrice',
+            santaka__pb2.PriceAlertRequest.SerializeToString,
+            santaka__pb2.AlertResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -215,8 +248,69 @@ class StockAlertService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/santaka.StockAlertService/CheckExpiration',
-            santaka__pb2.StockExpirationAlertRequest.SerializeToString,
-            santaka__pb2.StockAlertResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/santaka.AlertService/CheckExpiration',
+            santaka__pb2.ExpirationAlertRequest.SerializeToString,
+            santaka__pb2.AlertResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class CouponYieldServiceStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.CalculateCouponYield = channel.unary_unary(
+                '/santaka.CouponYieldService/CalculateCouponYield',
+                request_serializer=santaka__pb2.CouponYieldRequest.SerializeToString,
+                response_deserializer=santaka__pb2.CouponYieldResponse.FromString,
+                )
+
+
+class CouponYieldServiceServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def CalculateCouponYield(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_CouponYieldServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'CalculateCouponYield': grpc.unary_unary_rpc_method_handler(
+                    servicer.CalculateCouponYield,
+                    request_deserializer=santaka__pb2.CouponYieldRequest.FromString,
+                    response_serializer=santaka__pb2.CouponYieldResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'santaka.CouponYieldService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class CouponYieldService(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def CalculateCouponYield(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/santaka.CouponYieldService/CalculateCouponYield',
+            santaka__pb2.CouponYieldRequest.SerializeToString,
+            santaka__pb2.CouponYieldResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
