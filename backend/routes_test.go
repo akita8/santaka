@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,7 +24,7 @@ func newPingerTestClient(cc grpc.ClientConnInterface) pb.PingerClient {
 }
 
 func TestHandlePingSuccess(t *testing.T) {
-	srv := newAPI(http.NewServeMux(), &grpc.ClientConn{})
+	srv := newAPI(http.NewServeMux(), &grpc.ClientConn{}, log.New(ioutil.Discard, "", log.LstdFlags))
 	srv.router.HandleFunc("/ping", srv.handlePing(newPingerTestClient))
 	req := httptest.NewRequest("GET", "/ping", nil)
 	w := httptest.NewRecorder()
@@ -41,7 +43,7 @@ func TestHandlePingError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create grpc connection %v", err)
 	}
-	srv := newAPI(http.NewServeMux(), conn)
+	srv := newAPI(http.NewServeMux(), conn, log.New(ioutil.Discard, "", log.LstdFlags))
 	srv.routes()
 	req := httptest.NewRequest("GET", "/ping", nil)
 	w := httptest.NewRecorder()

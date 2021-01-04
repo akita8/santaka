@@ -29,16 +29,18 @@ func Version() string {
 type api struct {
 	router     *http.ServeMux
 	engineConn *grpc.ClientConn
+	logger     *log.Logger
 }
 
 func (a *api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.router.ServeHTTP(w, r)
 }
 
-func newAPI(m *http.ServeMux, ec *grpc.ClientConn) *api {
+func newAPI(m *http.ServeMux, ec *grpc.ClientConn, l *log.Logger) *api {
 	return &api{
 		router:     m,
 		engineConn: ec,
+		logger: l,
 	}
 }
 
@@ -51,7 +53,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	a := newAPI(http.NewServeMux(), conn)
+	a := newAPI(http.NewServeMux(), conn, log.New(os.Stderr, "", log.LstdFlags))
 	a.routes()
 
 	address := fmt.Sprintf("%s:%d", *host, *port)
