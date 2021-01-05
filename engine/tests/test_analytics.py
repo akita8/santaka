@@ -1,12 +1,10 @@
-from unittest.mock import MagicMock
-
 from pytest import approx, mark
 
-from engine.analytics import DifferenceService, AlertService, CouponYieldService
+from engine.analytics import DifferenceService, AlertService, CouponYieldService, FiscalPriceService
 from engine.santaka_pb2 import (
     DifferenceRequest, PriceAlertRequest,
     ExpirationAlertRequest, Operation,
-    CouponYieldRequest
+    CouponYieldRequest, FiscalPriceRequest
 )
 
 
@@ -17,7 +15,7 @@ from engine.santaka_pb2 import (
 ])
 def test_calculate_stock_difference(
         price, last_price, quantity, tax, on_buy, on_sell, expected, error_expected):
-    service = DifferenceService(MagicMock())
+    service = DifferenceService()
     request = DifferenceRequest()
     request.price = price
     request.last_price = last_price
@@ -31,7 +29,7 @@ def test_calculate_stock_difference(
 
 
 def test_calculate_bond_difference():
-    service = DifferenceService(MagicMock())
+    service = DifferenceService()
     request = DifferenceRequest()
     request.price = 99.88
     request.last_price = 100.332
@@ -51,7 +49,7 @@ def test_calculate_bond_difference():
     (0, 13.42, Operation.BUY, False, True),
 ])
 def test_alert_check_price(price, last_price, operation, message_expected, error_expected):
-    service = AlertService(MagicMock())
+    service = AlertService()
     request = PriceAlertRequest()
     request.price = price
     request.last_price = last_price
@@ -66,7 +64,7 @@ def test_alert_check_price(price, last_price, operation, message_expected, error
     (1612265967, 1609587567, False),
 ])
 def test_alert_check_expiration(expiration_date, current_date, message_expected):
-    service = AlertService(MagicMock())
+    service = AlertService()
     request = ExpirationAlertRequest()
     request.expiration_date = expiration_date
     request.current_date = current_date
@@ -86,7 +84,7 @@ def test_alert_check_expiration(expiration_date, current_date, message_expected)
 def test_calculate_coupon_yield(
         price, maturity_date, current_date, next_coupon_rate,
         invested, next_coupon_tax, error_expected, expected):
-    service = CouponYieldService(MagicMock())
+    service = CouponYieldService()
     request = CouponYieldRequest()
     request.price = price
     request.maturity_date = maturity_date
@@ -97,3 +95,59 @@ def test_calculate_coupon_yield(
     response = service.CalculateCouponYield(request)
     assert bool(response.error.message) is error_expected
     assert approx(response.coupon_yield, 0.01) == expected
+
+
+@mark.parametrize(
+    'transactions,expected_fiscal_price,error_expected',
+
+    (
+        (
+            (
+                (Operation.BUY, 5, 108.62, 11.97),
+                (Operation.SELL, 2, 277, 12.13),
+                (Operation.BUY, 2, 262.94, 11.97)
+            ),
+            174.1784,
+            False
+        ),
+        (
+            (
+                (Operation.BUY, 3, 151.1799, 12.5),
+                (Operation.BUY, 2, 296.981, 11.99)
+            ),
+            214.3983,
+            False
+        ),
+        (
+            (),
+            0,
+            True
+        ),
+        (
+            (
+                (Operation.SELL, 2, 100, 12),
+            ),
+            0,
+            True
+        ),
+        (
+            (
+                (Operation.BUY, -5, 100, 8),
+            ),
+            0,
+            True
+        ),
+    )
+)
+def test_calculate_fiscal_price(transactions, expected_fiscal_price, error_expected):
+    service = FiscalPriceService()
+    request = FiscalPriceRequest()
+    for transaction in transactions:
+        transaction_obj = request.transactions.add()
+        transaction_obj.operation = transaction[0]
+        transaction_obj.quantity = transaction[1]
+        transaction_obj.price = transaction[2]
+        transaction_obj.commission = transaction[3]
+    response = service.CalculateFicalPrice(request)
+    assert approx(response.fiscal_price, 0.01) == expected_fiscal_price
+    assert bool(response.error.message) is error_expected

@@ -4,13 +4,7 @@ import engine.santaka_pb2_grpc as santaka_grpc
 import engine.santaka_pb2 as santaka_pb2
 
 
-class LoggerMixin:
-    def __init__(self, logger, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.logger = logger
-
-
-class DifferenceService(santaka_grpc.DifferenceService, LoggerMixin):
+class DifferenceService(santaka_grpc.DifferenceService):
 
     def CalculateStockDifference(self, request, *args):
         return self._calculate_difference(request)
@@ -32,7 +26,7 @@ class DifferenceService(santaka_grpc.DifferenceService, LoggerMixin):
         return response
 
 
-class AlertService(santaka_grpc.AlertService, LoggerMixin):
+class AlertService(santaka_grpc.AlertService):
     def CheckExpiration(self, request, *args):
         response = santaka_pb2.AlertResponse()
         expiration = datetime.fromtimestamp(request.expiration_date).date()
@@ -54,7 +48,7 @@ class AlertService(santaka_grpc.AlertService, LoggerMixin):
         return response
 
 
-class CouponYieldService(santaka_grpc.CouponYieldService, LoggerMixin):
+class CouponYieldService(santaka_grpc.CouponYieldService):
     def CalculateCouponYield(self, request, *args):
         response = santaka_pb2.CouponYieldResponse()
         if request.price <= 0 or request.next_coupon_rate <= 0 or request.invested <= 0:
@@ -70,4 +64,34 @@ class CouponYieldService(santaka_grpc.CouponYieldService, LoggerMixin):
         repayment_diff = request.invested - (request.invested*(request.price/100))
         yield_tot = int(cumulative_coupon + repayment_diff)
         response.coupon_yield = yield_tot/(day_to_repayment/365.0)
+        return response
+
+
+class FiscalPriceService(santaka_grpc.FiscalPriceService):
+    def CalculateFicalPrice(self, request, *args):
+        response = santaka_pb2.FiscalPriceResponse()
+        if len(request.transactions) == 0:
+            response.error.message = \
+                'failed validation: at least one transaction needed to calculate fiscal price'
+            return response
+        if request.transactions[0].operation != santaka_pb2.Operation.BUY:
+            response.error.message = \
+                'failed validation: the first transaction operation must be BUY'
+            return response
+        invested = 0
+        quantity = 0
+        for transaction in request.transactions:
+            if transaction.price <= 0 or transaction.quantity <= 0:
+                response.error.message = \
+                    'failed validation: price and quantity must be greater than 0'
+                return response
+            if transaction.operation == santaka_pb2.Operation.BUY:
+                quantity = quantity + transaction.quantity
+                invested = invested + \
+                    (transaction.price * transaction.quantity + transaction.commission)
+            elif transaction.operation == santaka_pb2.Operation.SELL:
+                new_quantity = quantity - transaction.quantity
+                invested = (invested / quantity) * new_quantity
+                quantity = new_quantity
+        response.fiscal_price = invested / quantity
         return response
