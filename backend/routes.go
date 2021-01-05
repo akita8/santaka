@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/akita8/santaka/backend/pb"
@@ -18,7 +17,7 @@ func (a *api) handlePing(pc pingerConstructor) http.HandlerFunc {
 		c := pc(a.engineConn)
 		_, err := c.Ping(r.Context(), &emptypb.Empty{})
 		if err != nil {
-			log.Printf("failed to ping santaka engine: %v", err)
+			a.logger.Printf("failed to ping santaka engine: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

@@ -5,9 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 )
 
 var errFailedValidation = errors.New("failed validation")
+var errFailedRetrieval = errors.New("failed data retrieval")
 
 type liveStockData struct {
 	currency  string
@@ -48,20 +51,21 @@ func (r *yahooFinanceResponse) data() (d liveStockData, err error) {
 	return d, err
 }
 
-type stockRetriever interface {
-	retrieve(symbol string) (liveStockData, error)
-}
-
 type yahooChart struct {
-	endpoint string
+	client *http.Client
+	url    string
 }
 
 func (c *yahooChart) retrieve(symbol string) (d liveStockData, err error) {
-	resp, err := http.Get(fmt.Sprintf("%s%s", c.endpoint, symbol))
+	resp, err := c.client.Get(fmt.Sprintf("%s/%s", c.url, strings.ToUpper(symbol)))
 	if err != nil {
-		return d, fmt.Errorf("failed getting yahoo finance api: %w", err)
+		return d, fmt.Errorf("failed get request to yahoo finance api: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return d, fmt.Errorf("%w: yahoo finance api http response status is not 200: %d", errFailedRetrieval, resp.StatusCode)
+	}
 
 	r := new(yahooFinanceResponse)
 	dec := json.NewDecoder(resp.Body)
@@ -76,4 +80,16 @@ func (c *yahooChart) retrieve(symbol string) (d liveStockData, err error) {
 	}
 
 	return d, err
+}
+
+type liveBondData struct {
+	currency       string
+	lastPrice      float64
+	nextCouponRate float64
+	maturity       time.Time
+}
+
+type borsaItaliana struct {
+	client *http.Client
+	url    string
 }
