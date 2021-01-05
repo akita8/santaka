@@ -19,19 +19,20 @@ def server(host, port, max_workers, log_level):
 @click.command()
 def generate():
     root = pathlib.Path(__file__).parent.parent.parent
-    proto_include = pkg_resources.resource_filename('grpc_tools', '_proto')
+    proto_include = pkg_resources.resource_filename("grpc_tools", "_proto")
     args = [
         "",
         f"-I{root}",
         f"-I{proto_include}",
         "--python_out=engine",
         "--grpc_python_out=engine",
-        str(root / "santaka.proto")]
+        str(root / "santaka.proto"),
+    ]
     grpc_tools.protoc.main(args)
     with open(pathlib.Path(__file__).parent / "santaka_pb2_grpc.py", "r") as f:
         santaka_pb2_grpc = f.read().replace(
             "import santaka_pb2 as santaka__pb2",
-            "import engine.santaka_pb2 as santaka__pb2"
+            "import engine.santaka_pb2 as santaka__pb2",
         )
     with open(pathlib.Path(__file__).parent / "santaka_pb2.py", "r") as f:
         santaka_pb2 = f.read()
