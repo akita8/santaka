@@ -20,7 +20,6 @@ const (
 	maturityLayout          string = "01/02/2006"
 )
 
-var errFailedValidation = errors.New("failed validation")
 var errFailedRetrieval = errors.New("failed data retrieval")
 
 type liveStockData struct {
@@ -49,13 +48,13 @@ func (r *yahooFinanceResponse) lastPrice() float64 {
 
 func (r *yahooFinanceResponse) data() (d liveStockData, err error) {
 	if r.Chart.Result == nil || len(r.Chart.Result) == 0 {
-		return d, fmt.Errorf("%w: missing required result array", errFailedValidation)
+		return d, fmt.Errorf("%w: missing required result array", errFailedRetrieval)
 	}
 	if r.Chart.Result[0].Meta.Currency == nil {
-		return d, fmt.Errorf("%w: missing required currency field", errFailedValidation)
+		return d, fmt.Errorf("%w: missing required currency field", errFailedRetrieval)
 	}
 	if r.Chart.Result[0].Meta.RegularMarketPrice == nil {
-		return d, fmt.Errorf("%w: missing required regularMarketPrice field", errFailedValidation)
+		return d, fmt.Errorf("%w: missing required regularMarketPrice field", errFailedRetrieval)
 	}
 	d.currency = r.currency()
 	d.lastPrice = r.lastPrice()

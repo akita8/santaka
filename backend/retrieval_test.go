@@ -18,7 +18,7 @@ func TestYahooChartRetrieve(t *testing.T) {
 		expected           liveStockData
 	}{
 		{"yahoo_chart_error_empty", 400, errFailedRetrieval, liveStockData{}},
-		{"yahoo_chart_error_incomplete", 200, errFailedValidation, liveStockData{}},
+		{"yahoo_chart_error_incomplete", 200, errFailedRetrieval, liveStockData{}},
 		{"yahoo_chart_success", 200, nil, liveStockData{"USD", 132.69}},
 	}
 
