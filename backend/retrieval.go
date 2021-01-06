@@ -5,8 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/html"
+)
+
+const (
+	currencyFieldName       string = "Trading currency"
+	lastPriceFieldName      string = "Close price"
+	nextCouponRateFieldName string = "Current coupon rate"
+	maturityFieldName       string = "Maturity"
+	maturityLayout          string = "01/02/2006"
 )
 
 var errFailedValidation = errors.New("failed validation")
@@ -53,11 +64,10 @@ func (r *yahooFinanceResponse) data() (d liveStockData, err error) {
 
 type yahooChart struct {
 	client *http.Client
-	url    string
 }
 
-func (c *yahooChart) retrieve(symbol string) (d liveStockData, err error) {
-	resp, err := c.client.Get(fmt.Sprintf("%s/%s", c.url, strings.ToUpper(symbol)))
+func (c *yahooChart) retrieve(url string) (d liveStockData, err error) {
+	resp, err := c.client.Get(url)
 	if err != nil {
 		return d, fmt.Errorf("failed get request to yahoo finance api: %w", err)
 	}
@@ -87,9 +97,95 @@ type liveBondData struct {
 	lastPrice      float64
 	nextCouponRate float64
 	maturity       time.Time
+	url            string
+}
+
+func (d *liveBondData) isValidField(name string) bool {
+	switch strings.TrimSpace(name) {
+	case currencyFieldName:
+		fallthrough
+	case lastPriceFieldName:
+		fallthrough
+	case nextCouponRateFieldName:
+		fallthrough
+	case maturityFieldName:
+		return true
+	}
+	return false
+}
+
+func (d *liveBondData) field(name, value string) error {
+	value = strings.TrimSpace(value)
+	switch strings.TrimSpace(name) {
+	case currencyFieldName:
+		d.currency = value
+	case lastPriceFieldName:
+		n, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return err
+		}
+		d.lastPrice = n
+	case nextCouponRateFieldName:
+		n, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return err
+		}
+		d.nextCouponRate = n
+	case maturityFieldName:
+		m, err := time.Parse(maturityLayout, value)
+		if err != nil {
+			return err
+		}
+		d.maturity = m
+	}
+	return nil
 }
 
 type borsaItaliana struct {
 	client *http.Client
-	url    string
+
+	nextFieldName string
+	extracted     *liveBondData
+}
+
+func (b *borsaItaliana) extract(n *html.Node) {
+	if n.Type == html.TextNode && b.extracted.isValidField(n.Data) {
+		b.nextFieldName = n.Data
+	} else if n.Type == html.ElementNode && n.Data == "span" && b.nextFieldName != "" {
+		for _, attr := range n.Attr {
+			if attr.Key == "class" && strings.HasPrefix(attr.Val, "t-text -right") {
+				b.extracted.field(b.nextFieldName, n.FirstChild.Data)
+				b.nextFieldName = ""
+				break
+			}
+		}
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		b.extract(c)
+	}
+}
+
+func (b *borsaItaliana) retrieve(url string) (d liveBondData, err error) {
+	resp, err := b.client.Get(url)
+	if err != nil {
+		return d, fmt.Errorf("failed get request to borsa italiana: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return d, fmt.Errorf("%w: borsa italiana http response status is not 200: %d", errFailedRetrieval, resp.StatusCode)
+	}
+
+	parsed, err := html.Parse(resp.Body)
+	if err != nil {
+		return d, err
+	}
+
+	b.extracted = &d
+	b.extract(parsed)
+	if d.currency == "" || d.lastPrice == 0 {
+		return d, errFailedRetrieval
+	}
+	d.url = resp.Request.URL.String()
+	return d, nil
 }
