@@ -81,3 +81,34 @@ message CouponYieldResponse{
  service CouponYieldService{
    rpc CalculateCouponYield(CouponYieldRequest) returns (CouponYieldResponse);
  }
+
+message StockTransaction{
+  double price = 1;
+  int64 quantity = 2;
+  double commission = 3;
+  Operation operation = 4;
+}
+
+message BondTransaction{
+  double price = 1;
+  int64 quantity = 2;
+  Operation operation = 3;
+}
+
+message StockFiscalPriceRequest{
+  repeated StockTransaction transactions = 1; 
+}
+
+message BondFiscalPriceRequest{
+  repeated BondTransaction transactions = 1;
+}
+
+message FiscalPriceResponse{
+  double fiscal_price = 1;
+  Error error = 2;
+}
+
+service FiscalPriceService{
+  rpc CalculateStockFiscalPrice(StockFiscalPriceRequest) returns (FiscalPriceResponse);
+  rpc CalculateBondFiscalPrice(BondFiscalPriceRequest) returns (FiscalPriceResponse);
+}
