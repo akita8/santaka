@@ -147,21 +147,28 @@ type borsaItaliana struct {
 	extracted     *liveBondData
 }
 
-func (b *borsaItaliana) extract(n *html.Node) {
+func (b *borsaItaliana) extract(n *html.Node) error {
 	if n.Type == html.TextNode && b.extracted.isValidField(n.Data) {
 		b.nextFieldName = n.Data
 	} else if n.Type == html.ElementNode && n.Data == "span" && b.nextFieldName != "" {
 		for _, attr := range n.Attr {
 			if attr.Key == "class" && strings.HasPrefix(attr.Val, "t-text -right") {
-				b.extracted.field(b.nextFieldName, n.FirstChild.Data)
+				err := b.extracted.field(b.nextFieldName, n.FirstChild.Data)
+				if err != nil {
+					return err
+				}
 				b.nextFieldName = ""
 				break
 			}
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		b.extract(c)
+		err := b.extract(c)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (b *borsaItaliana) retrieve(url string) (d liveBondData, err error) {
