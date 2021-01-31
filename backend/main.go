@@ -40,7 +40,7 @@ func newAPI(m *http.ServeMux, ec *grpc.ClientConn, l *log.Logger) *api {
 	return &api{
 		router:     m,
 		engineConn: ec,
-		logger: l,
+		logger:     l,
 	}
 }
 
