@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
     syntax="proto3",
     serialized_options=b"Z$github.com/akita8/santaka/backend/pb",
     create_key=_descriptor._internal_create_key,
-    serialized_pb=b'\n\rsantaka.proto\x12\x07santaka\x1a\x1bgoogle/protobuf/empty.proto"\x18\n\x05\x45rror\x12\x0f\n\x07message\x18\x01 \x01(\t"-\n\nCommission\x12\x0e\n\x06on_buy\x18\x01 \x01(\x01\x12\x0f\n\x07on_sell\x18\x02 \x01(\x01"~\n\x11\x44ifferenceRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12\x12\n\nlast_price\x18\x03 \x01(\x01\x12\x0b\n\x03tax\x18\x04 \x01(\x01\x12\'\n\ncommission\x18\x05 \x01(\x0b\x32\x13.santaka.Commission"G\n\x12\x44ifferenceResponse\x12\x12\n\ndifference\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error"]\n\x11PriceAlertRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x12\n\nlast_price\x18\x02 \x01(\x01\x12%\n\toperation\x18\x03 \x01(\x0e\x32\x12.santaka.Operation"G\n\x16\x45xpirationAlertRequest\x12\x17\n\x0f\x65xpiration_date\x18\x01 \x01(\x03\x12\x14\n\x0c\x63urrent_date\x18\x02 \x01(\x03"?\n\rAlertResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error"\x95\x01\n\x12\x43ouponYieldRequest\x12\x15\n\rmaturity_date\x18\x01 \x01(\x03\x12\x18\n\x10next_coupon_rate\x18\x02 \x01(\x01\x12\r\n\x05price\x18\x03 \x01(\x01\x12\x10\n\x08invested\x18\x04 \x01(\x01\x12\x17\n\x0fnext_coupon_tax\x18\x05 \x01(\x01\x12\x14\n\x0c\x63urrent_date\x18\x06 \x01(\x03"J\n\x13\x43ouponYieldResponse\x12\x14\n\x0c\x63oupon_yield\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error"n\n\x10StockTransaction\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12\x12\n\ncommission\x18\x03 \x01(\x01\x12%\n\toperation\x18\x04 \x01(\x0e\x32\x12.santaka.Operation"Y\n\x0f\x42ondTransaction\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12%\n\toperation\x18\x03 \x01(\x0e\x32\x12.santaka.Operation"J\n\x17StockFiscalPriceRequest\x12/\n\x0ctransactions\x18\x01 \x03(\x0b\x32\x19.santaka.StockTransaction"H\n\x16\x42ondFiscalPriceRequest\x12.\n\x0ctransactions\x18\x01 \x03(\x0b\x32\x18.santaka.BondTransaction"J\n\x13\x46iscalPriceResponse\x12\x14\n\x0c\x66iscal_price\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error*\'\n\tOperation\x12\x07\n\x03NOP\x10\x00\x12\x07\n\x03\x42UY\x10\x01\x12\x08\n\x04SELL\x10\x02\x32\x42\n\x06Pinger\x12\x38\n\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty"\x00\x32\xbc\x01\n\x11\x44ifferenceService\x12S\n\x18\x43\x61lculateStockDifference\x12\x1a.santaka.DifferenceRequest\x1a\x1b.santaka.DifferenceResponse\x12R\n\x17\x43\x61lculateBondDifference\x12\x1a.santaka.DifferenceRequest\x1a\x1b.santaka.DifferenceResponse2\x9c\x01\n\x0c\x41lertService\x12@\n\nCheckPrice\x12\x1a.santaka.PriceAlertRequest\x1a\x16.santaka.AlertResponse\x12J\n\x0f\x43heckExpiration\x12\x1f.santaka.ExpirationAlertRequest\x1a\x16.santaka.AlertResponse2g\n\x12\x43ouponYieldService\x12Q\n\x14\x43\x61lculateCouponYield\x12\x1b.santaka.CouponYieldRequest\x1a\x1c.santaka.CouponYieldResponse2\xcc\x01\n\x12\x46iscalPriceService\x12[\n\x19\x43\x61lculateStockFiscalPrice\x12 .santaka.StockFiscalPriceRequest\x1a\x1c.santaka.FiscalPriceResponse\x12Y\n\x18\x43\x61lculateBondFiscalPrice\x12\x1f.santaka.BondFiscalPriceRequest\x1a\x1c.santaka.FiscalPriceResponseB&Z$github.com/akita8/santaka/backend/pbb\x06proto3',
+    serialized_pb=b'\n\rsantaka.proto\x12\x07santaka\x1a\x1bgoogle/protobuf/empty.proto"\x18\n\x05\x45rror\x12\x0f\n\x07message\x18\x01 \x01(\t"-\n\nCommission\x12\x0e\n\x06on_buy\x18\x01 \x01(\x01\x12\x0f\n\x07on_sell\x18\x02 \x01(\x01"~\n\x11\x44ifferenceRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12\x12\n\nlast_price\x18\x03 \x01(\x01\x12\x0b\n\x03tax\x18\x04 \x01(\x01\x12\'\n\ncommission\x18\x05 \x01(\x0b\x32\x13.santaka.Commission"G\n\x12\x44ifferenceResponse\x12\x12\n\ndifference\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error"]\n\x11PriceAlertRequest\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x12\n\nlast_price\x18\x02 \x01(\x01\x12%\n\toperation\x18\x03 \x01(\x0e\x32\x12.santaka.Operation"G\n\x16\x45xpirationAlertRequest\x12\x17\n\x0f\x65xpiration_date\x18\x01 \x01(\x03\x12\x14\n\x0c\x63urrent_date\x18\x02 \x01(\x03"?\n\rAlertResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error"\xcb\x01\n\x12\x43ouponYieldRequest\x12\x15\n\rmaturity_date\x18\x01 \x01(\x03\x12\x18\n\x10next_coupon_rate\x18\x02 \x01(\x01\x12\r\n\x05price\x18\x03 \x01(\x01\x12\x10\n\x08invested\x18\x04 \x01(\x01\x12\x17\n\x0fnext_coupon_tax\x18\x05 \x01(\x01\x12\x14\n\x0c\x63urrent_date\x18\x06 \x01(\x03\x12\x34\n\x11payment_frequency\x18\x07 \x01(\x0e\x32\x19.santaka.PaymentFrequency"J\n\x13\x43ouponYieldResponse\x12\x14\n\x0c\x63oupon_yield\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error"|\n\x10StockTransaction\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12\x12\n\ncommission\x18\x03 \x01(\x01\x12%\n\toperation\x18\x04 \x01(\x0e\x32\x12.santaka.Operation\x12\x0c\n\x04\x64\x61te\x18\x05 \x01(\x03"Y\n\x0f\x42ondTransaction\x12\r\n\x05price\x18\x01 \x01(\x01\x12\x10\n\x08quantity\x18\x02 \x01(\x03\x12%\n\toperation\x18\x03 \x01(\x0e\x32\x12.santaka.Operation"u\n\x17StockFiscalPriceRequest\x12/\n\x0ctransactions\x18\x01 \x03(\x0b\x32\x19.santaka.StockTransaction\x12)\n\x0csplit_events\x18\x02 \x03(\x0b\x32\x13.santaka.SplitEvent"H\n\x16\x42ondFiscalPriceRequest\x12.\n\x0ctransactions\x18\x01 \x03(\x0b\x32\x18.santaka.BondTransaction"J\n\x13\x46iscalPriceResponse\x12\x14\n\x0c\x66iscal_price\x18\x01 \x01(\x01\x12\x1d\n\x05\x65rror\x18\x02 \x01(\x0b\x32\x0e.santaka.Error"*\n\nSplitEvent\x12\x0c\n\x04\x64\x61te\x18\x01 \x01(\x03\x12\x0e\n\x06\x66\x61\x63tor\x18\x02 \x01(\x01*\'\n\tOperation\x12\x07\n\x03NOP\x10\x00\x12\x07\n\x03\x42UY\x10\x01\x12\x08\n\x04SELL\x10\x02*B\n\x10PaymentFrequency\x12\x0c\n\x08ONE_YEAR\x10\x00\x12\x0e\n\nSIX_MONTHS\x10\x01\x12\x10\n\x0cTHREE_MONTHS\x10\x02\x32\x42\n\x06Pinger\x12\x38\n\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty"\x00\x32\xbc\x01\n\x11\x44ifferenceService\x12S\n\x18\x43\x61lculateStockDifference\x12\x1a.santaka.DifferenceRequest\x1a\x1b.santaka.DifferenceResponse\x12R\n\x17\x43\x61lculateBondDifference\x12\x1a.santaka.DifferenceRequest\x1a\x1b.santaka.DifferenceResponse2\x9c\x01\n\x0c\x41lertService\x12@\n\nCheckPrice\x12\x1a.santaka.PriceAlertRequest\x1a\x16.santaka.AlertResponse\x12J\n\x0f\x43heckExpiration\x12\x1f.santaka.ExpirationAlertRequest\x1a\x16.santaka.AlertResponse2g\n\x12\x43ouponYieldService\x12Q\n\x14\x43\x61lculateCouponYield\x12\x1b.santaka.CouponYieldRequest\x1a\x1c.santaka.CouponYieldResponse2\xcc\x01\n\x12\x46iscalPriceService\x12[\n\x19\x43\x61lculateStockFiscalPrice\x12 .santaka.StockFiscalPriceRequest\x1a\x1c.santaka.FiscalPriceResponse\x12Y\n\x18\x43\x61lculateBondFiscalPrice\x12\x1f.santaka.BondFiscalPriceRequest\x1a\x1c.santaka.FiscalPriceResponseB&Z$github.com/akita8/santaka/backend/pbb\x06proto3',
     dependencies=[
         google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,
     ],
@@ -63,15 +63,58 @@ _OPERATION = _descriptor.EnumDescriptor(
     ],
     containing_type=None,
     serialized_options=None,
-    serialized_start=1219,
-    serialized_end=1258,
+    serialized_start=1374,
+    serialized_end=1413,
 )
 _sym_db.RegisterEnumDescriptor(_OPERATION)
 
 Operation = enum_type_wrapper.EnumTypeWrapper(_OPERATION)
+_PAYMENTFREQUENCY = _descriptor.EnumDescriptor(
+    name="PaymentFrequency",
+    full_name="santaka.PaymentFrequency",
+    filename=None,
+    file=DESCRIPTOR,
+    create_key=_descriptor._internal_create_key,
+    values=[
+        _descriptor.EnumValueDescriptor(
+            name="ONE_YEAR",
+            index=0,
+            number=0,
+            serialized_options=None,
+            type=None,
+            create_key=_descriptor._internal_create_key,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="SIX_MONTHS",
+            index=1,
+            number=1,
+            serialized_options=None,
+            type=None,
+            create_key=_descriptor._internal_create_key,
+        ),
+        _descriptor.EnumValueDescriptor(
+            name="THREE_MONTHS",
+            index=2,
+            number=2,
+            serialized_options=None,
+            type=None,
+            create_key=_descriptor._internal_create_key,
+        ),
+    ],
+    containing_type=None,
+    serialized_options=None,
+    serialized_start=1415,
+    serialized_end=1481,
+)
+_sym_db.RegisterEnumDescriptor(_PAYMENTFREQUENCY)
+
+PaymentFrequency = enum_type_wrapper.EnumTypeWrapper(_PAYMENTFREQUENCY)
 NOP = 0
 BUY = 1
 SELL = 2
+ONE_YEAR = 0
+SIX_MONTHS = 1
+THREE_MONTHS = 2
 
 
 _ERROR = _descriptor.Descriptor(
@@ -673,6 +716,25 @@ _COUPONYIELDREQUEST = _descriptor.Descriptor(
             file=DESCRIPTOR,
             create_key=_descriptor._internal_create_key,
         ),
+        _descriptor.FieldDescriptor(
+            name="payment_frequency",
+            full_name="santaka.CouponYieldRequest.payment_frequency",
+            index=6,
+            number=7,
+            type=14,
+            cpp_type=8,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+            create_key=_descriptor._internal_create_key,
+        ),
     ],
     extensions=[],
     nested_types=[],
@@ -683,7 +745,7 @@ _COUPONYIELDREQUEST = _descriptor.Descriptor(
     extension_ranges=[],
     oneofs=[],
     serialized_start=563,
-    serialized_end=712,
+    serialized_end=766,
 )
 
 
@@ -742,8 +804,8 @@ _COUPONYIELDRESPONSE = _descriptor.Descriptor(
     syntax="proto3",
     extension_ranges=[],
     oneofs=[],
-    serialized_start=714,
-    serialized_end=788,
+    serialized_start=768,
+    serialized_end=842,
 )
 
 
@@ -831,6 +893,25 @@ _STOCKTRANSACTION = _descriptor.Descriptor(
             file=DESCRIPTOR,
             create_key=_descriptor._internal_create_key,
         ),
+        _descriptor.FieldDescriptor(
+            name="date",
+            full_name="santaka.StockTransaction.date",
+            index=4,
+            number=5,
+            type=3,
+            cpp_type=2,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+            create_key=_descriptor._internal_create_key,
+        ),
     ],
     extensions=[],
     nested_types=[],
@@ -840,8 +921,8 @@ _STOCKTRANSACTION = _descriptor.Descriptor(
     syntax="proto3",
     extension_ranges=[],
     oneofs=[],
-    serialized_start=790,
-    serialized_end=900,
+    serialized_start=844,
+    serialized_end=968,
 )
 
 
@@ -919,8 +1000,8 @@ _BONDTRANSACTION = _descriptor.Descriptor(
     syntax="proto3",
     extension_ranges=[],
     oneofs=[],
-    serialized_start=902,
-    serialized_end=991,
+    serialized_start=970,
+    serialized_end=1059,
 )
 
 
@@ -951,6 +1032,25 @@ _STOCKFISCALPRICEREQUEST = _descriptor.Descriptor(
             file=DESCRIPTOR,
             create_key=_descriptor._internal_create_key,
         ),
+        _descriptor.FieldDescriptor(
+            name="split_events",
+            full_name="santaka.StockFiscalPriceRequest.split_events",
+            index=1,
+            number=2,
+            type=11,
+            cpp_type=10,
+            label=3,
+            has_default_value=False,
+            default_value=[],
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+            create_key=_descriptor._internal_create_key,
+        ),
     ],
     extensions=[],
     nested_types=[],
@@ -960,8 +1060,8 @@ _STOCKFISCALPRICEREQUEST = _descriptor.Descriptor(
     syntax="proto3",
     extension_ranges=[],
     oneofs=[],
-    serialized_start=993,
-    serialized_end=1067,
+    serialized_start=1061,
+    serialized_end=1178,
 )
 
 
@@ -1001,8 +1101,8 @@ _BONDFISCALPRICEREQUEST = _descriptor.Descriptor(
     syntax="proto3",
     extension_ranges=[],
     oneofs=[],
-    serialized_start=1069,
-    serialized_end=1141,
+    serialized_start=1180,
+    serialized_end=1252,
 )
 
 
@@ -1061,18 +1161,80 @@ _FISCALPRICERESPONSE = _descriptor.Descriptor(
     syntax="proto3",
     extension_ranges=[],
     oneofs=[],
-    serialized_start=1143,
-    serialized_end=1217,
+    serialized_start=1254,
+    serialized_end=1328,
+)
+
+
+_SPLITEVENT = _descriptor.Descriptor(
+    name="SplitEvent",
+    full_name="santaka.SplitEvent",
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    create_key=_descriptor._internal_create_key,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name="date",
+            full_name="santaka.SplitEvent.date",
+            index=0,
+            number=1,
+            type=3,
+            cpp_type=2,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+            create_key=_descriptor._internal_create_key,
+        ),
+        _descriptor.FieldDescriptor(
+            name="factor",
+            full_name="santaka.SplitEvent.factor",
+            index=1,
+            number=2,
+            type=1,
+            cpp_type=5,
+            label=1,
+            has_default_value=False,
+            default_value=float(0),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+            create_key=_descriptor._internal_create_key,
+        ),
+    ],
+    extensions=[],
+    nested_types=[],
+    enum_types=[],
+    serialized_options=None,
+    is_extendable=False,
+    syntax="proto3",
+    extension_ranges=[],
+    oneofs=[],
+    serialized_start=1330,
+    serialized_end=1372,
 )
 
 _DIFFERENCEREQUEST.fields_by_name["commission"].message_type = _COMMISSION
 _DIFFERENCERESPONSE.fields_by_name["error"].message_type = _ERROR
 _PRICEALERTREQUEST.fields_by_name["operation"].enum_type = _OPERATION
 _ALERTRESPONSE.fields_by_name["error"].message_type = _ERROR
+_COUPONYIELDREQUEST.fields_by_name["payment_frequency"].enum_type = _PAYMENTFREQUENCY
 _COUPONYIELDRESPONSE.fields_by_name["error"].message_type = _ERROR
 _STOCKTRANSACTION.fields_by_name["operation"].enum_type = _OPERATION
 _BONDTRANSACTION.fields_by_name["operation"].enum_type = _OPERATION
 _STOCKFISCALPRICEREQUEST.fields_by_name["transactions"].message_type = _STOCKTRANSACTION
+_STOCKFISCALPRICEREQUEST.fields_by_name["split_events"].message_type = _SPLITEVENT
 _BONDFISCALPRICEREQUEST.fields_by_name["transactions"].message_type = _BONDTRANSACTION
 _FISCALPRICERESPONSE.fields_by_name["error"].message_type = _ERROR
 DESCRIPTOR.message_types_by_name["Error"] = _ERROR
@@ -1089,7 +1251,9 @@ DESCRIPTOR.message_types_by_name["BondTransaction"] = _BONDTRANSACTION
 DESCRIPTOR.message_types_by_name["StockFiscalPriceRequest"] = _STOCKFISCALPRICEREQUEST
 DESCRIPTOR.message_types_by_name["BondFiscalPriceRequest"] = _BONDFISCALPRICEREQUEST
 DESCRIPTOR.message_types_by_name["FiscalPriceResponse"] = _FISCALPRICERESPONSE
+DESCRIPTOR.message_types_by_name["SplitEvent"] = _SPLITEVENT
 DESCRIPTOR.enum_types_by_name["Operation"] = _OPERATION
+DESCRIPTOR.enum_types_by_name["PaymentFrequency"] = _PAYMENTFREQUENCY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Error = _reflection.GeneratedProtocolMessageType(
@@ -1246,6 +1410,17 @@ FiscalPriceResponse = _reflection.GeneratedProtocolMessageType(
 )
 _sym_db.RegisterMessage(FiscalPriceResponse)
 
+SplitEvent = _reflection.GeneratedProtocolMessageType(
+    "SplitEvent",
+    (_message.Message,),
+    {
+        "DESCRIPTOR": _SPLITEVENT,
+        "__module__": "santaka_pb2"
+        # @@protoc_insertion_point(class_scope:santaka.SplitEvent)
+    },
+)
+_sym_db.RegisterMessage(SplitEvent)
+
 
 DESCRIPTOR._options = None
 
@@ -1256,8 +1431,8 @@ _PINGER = _descriptor.ServiceDescriptor(
     index=0,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
-    serialized_start=1260,
-    serialized_end=1326,
+    serialized_start=1483,
+    serialized_end=1549,
     methods=[
         _descriptor.MethodDescriptor(
             name="Ping",
@@ -1283,8 +1458,8 @@ _DIFFERENCESERVICE = _descriptor.ServiceDescriptor(
     index=1,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
-    serialized_start=1329,
-    serialized_end=1517,
+    serialized_start=1552,
+    serialized_end=1740,
     methods=[
         _descriptor.MethodDescriptor(
             name="CalculateStockDifference",
@@ -1320,8 +1495,8 @@ _ALERTSERVICE = _descriptor.ServiceDescriptor(
     index=2,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
-    serialized_start=1520,
-    serialized_end=1676,
+    serialized_start=1743,
+    serialized_end=1899,
     methods=[
         _descriptor.MethodDescriptor(
             name="CheckPrice",
@@ -1357,8 +1532,8 @@ _COUPONYIELDSERVICE = _descriptor.ServiceDescriptor(
     index=3,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
-    serialized_start=1678,
-    serialized_end=1781,
+    serialized_start=1901,
+    serialized_end=2004,
     methods=[
         _descriptor.MethodDescriptor(
             name="CalculateCouponYield",
@@ -1384,8 +1559,8 @@ _FISCALPRICESERVICE = _descriptor.ServiceDescriptor(
     index=4,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
-    serialized_start=1784,
-    serialized_end=1988,
+    serialized_start=2007,
+    serialized_end=2211,
     methods=[
         _descriptor.MethodDescriptor(
             name="CalculateStockFiscalPrice",
