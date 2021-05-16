@@ -207,6 +207,18 @@ def test_calculate_coupon_yield(
         ),
         (
             (
+                (Operation.BUY, 50, 31.65, 15.19, 0),
+                (Operation.BUY, 30, 46.71, 16.76, 0),
+                (Operation.BUY, 20, 51.78, 15.98, 0),
+                (Operation.BUY, 20, 50.00, 17.08, 0),
+                (Operation.BUY, 20, 40.30, 17.09, 0),
+            ),
+            [],
+            42.196,
+            False,
+        ),
+        (
+            (
                 (Operation.BUY, 500, 3.994, 8, 0),
                 (Operation.BUY, 500, 3.6, 8, 0),
                 (Operation.SELL, 900, 4.58, 0, 0),
@@ -242,6 +254,16 @@ def test_calculate_coupon_yield(
             ),
             [(1598826422, 4)],
             53.598,
+            False,
+        ),
+        (
+            (
+                (Operation.BUY, 3, 151.1799, 12.5, 1546036022),
+                (Operation.BUY, 2, 296.981, 11.99, 1582928822),
+                (Operation.BUY, 5, 132.000, 11.99, 1612202877)
+            ),
+            [(1598826422, 4)],
+            69.7585,
             False,
         ),
     ),
