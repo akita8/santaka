@@ -1,4 +1,4 @@
-from engine import __version__
+from santaka import __version__
 
 
 def test_version():
