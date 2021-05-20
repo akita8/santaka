@@ -64,6 +64,12 @@ service AlertService{
   rpc CheckExpiration(ExpirationAlertRequest) returns (AlertResponse);
 }
 
+enum PaymentFrequency{
+  ONE_YEAR = 0;
+  SIX_MONTHS = 1;
+  THREE_MONTHS = 2;
+}
+
 message CouponYieldRequest{
   int64 maturity_date = 1;
   double next_coupon_rate = 2;
@@ -71,6 +77,7 @@ message CouponYieldRequest{
   double invested = 4;
   double next_coupon_tax = 5;
   int64 current_date = 6;
+  PaymentFrequency payment_frequency = 7;
 }
 
 message CouponYieldResponse{
@@ -87,6 +94,7 @@ message StockTransaction{
   int64 quantity = 2;
   double commission = 3;
   Operation operation = 4;
+  int64 date = 5;
 }
 
 message BondTransaction{
@@ -96,7 +104,8 @@ message BondTransaction{
 }
 
 message StockFiscalPriceRequest{
-  repeated StockTransaction transactions = 1; 
+  repeated StockTransaction transactions = 1;
+  repeated SplitEvent split_events = 2;
 }
 
 message BondFiscalPriceRequest{
@@ -111,4 +120,9 @@ message FiscalPriceResponse{
 service FiscalPriceService{
   rpc CalculateStockFiscalPrice(StockFiscalPriceRequest) returns (FiscalPriceResponse);
   rpc CalculateBondFiscalPrice(BondFiscalPriceRequest) returns (FiscalPriceResponse);
+}
+
+message SplitEvent{
+  int64 date = 1;
+  double factor = 2;
 }
