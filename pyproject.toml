@@ -17,6 +17,7 @@ passlib = "^1.7.4"
 bcrypt = "^3.2.0"
 python-multipart = "^0.0.5"
 click = "^7.0.0"
+aiohttp = "^3.7.4"
 
 
 [tool.poetry.dev-dependencies]

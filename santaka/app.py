@@ -34,6 +34,7 @@ from santaka.models import (
 SECRET_KEY = environ.get("SECRET_KEY", "secret")
 ACCESS_TOKEN_EXPIRE_MINUTES = environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 24 * 60)
 ALGORITHM = "HS256"
+DEFAULT_CURRENCY = "EUR"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
