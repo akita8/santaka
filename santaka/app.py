@@ -28,6 +28,8 @@ from santaka.models import (
     NewStockTransaction,
     StockTransaction,
 )
+from santaka.utils import get_yahoo_quote, YahooError
+
 
 # the default value for SECRET_KEY and ACCESS_TOKEN_EXPIRE_MINUTES are only for dev,
 # export valid ones in prod
@@ -202,7 +204,26 @@ async def create_stock(new_stock: NewStock, _: User = Depends(get_current_user))
     currency_record = await database.fetch_one(query)
     stock_record = None
     if currency_record is None:
-        query = currency.insert().values(iso_currency=new_stock.currency, last_rate=0)
+        if new_stock.currency == DEFAULT_CURRENCY:
+            last_rate = 1
+        else:
+            symbol = f"{DEFAULT_CURRENCY}{new_stock.currency}=X"
+            try:
+                quotes = await get_yahoo_quote([symbol])
+            except YahooError:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Call to provider unsuccessful",
+                )
+            if symbol not in quotes:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Symbol {symbol} doesn't exist",
+                )
+            last_rate = quotes[symbol]
+        query = currency.insert().values(
+            iso_currency=new_stock.currency, last_rate=last_rate
+        )
         currency_id = await database.execute(query)
     else:
         currency_id = currency_record.currency_id
