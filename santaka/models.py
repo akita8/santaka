@@ -16,6 +16,11 @@ class User(BaseModel):
     user_id: int
 
 
+class Owner(BaseModel):
+    name: str
+    owner_id: int
+
+
 class NewAccount(BaseModel):
     owners: conlist(str, min_items=1)
     bank: str
@@ -24,6 +29,7 @@ class NewAccount(BaseModel):
 
 class Account(NewAccount):
     account_id: int
+    owners: List[Owner]
 
 
 class Accounts(BaseModel):
@@ -32,14 +38,11 @@ class Accounts(BaseModel):
 
 class NewStock(BaseModel):
     isin: str
-    market: str
     symbol: str
-    currency: str
 
 
 class Stock(NewStock):
     stock_id: int
-    last_price: Decimal
 
 
 class TransactionType(str, Enum):
@@ -48,7 +51,7 @@ class TransactionType(str, Enum):
 
 
 class NewStockTransaction(BaseModel):
-    account_id: int
+    stock_id: int
     price: Decimal
     quantity: int
     tax: Decimal = 0
@@ -59,3 +62,18 @@ class NewStockTransaction(BaseModel):
 
 class StockTransaction(NewStockTransaction):
     stock_transaction_id: int
+
+
+class StockTransactionHistory(BaseModel):
+    transactions: List[StockTransaction]
+
+
+class DetailedStock(Stock):
+    market: str
+    currency: str
+    last_price: Decimal
+    last_rate: Decimal
+
+
+class TradedStocks(BaseModel):
+    stocks: List[DetailedStock]

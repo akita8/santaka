@@ -3,13 +3,11 @@ from os import environ
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from databases import Database
 from sqlalchemy.sql import select
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from santaka.db import (
-    DATABASE_URL,
+    database,
     accounts,
     owners,
     users,
@@ -27,8 +25,19 @@ from santaka.models import (
     User,
     NewStockTransaction,
     StockTransaction,
+    StockTransactionHistory,
+    TradedStocks,
 )
-from santaka.utils import get_yahoo_quote, YahooError
+from santaka.utils import (
+    call_yahoo_from_view,
+    YAHOO_FIELD_PRICE,
+    YAHOO_FIELD_MARKET,
+    YAHOO_FIELD_CURRENCY,
+    get_user,
+    get_owner,
+    create_random_id,
+    verify_password,
+)
 
 
 # the default value for SECRET_KEY and ACCESS_TOKEN_EXPIRE_MINUTES are only for dev,
@@ -38,29 +47,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 24 * 60
 ALGORITHM = "HS256"
 DEFAULT_CURRENCY = "EUR"
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-database = Database(DATABASE_URL)
 app = FastAPI()
-
-
-def verify_password(plain_password, hashed_password: str):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-async def create_user(username, password: str):
-    hashed_password = pwd_context.hash(password)
-    query = users.insert().values(username=username, password=hashed_password)
-    user_id = await database.execute(query)
-    print(f"created user {username} with {user_id} id")
-
-
-async def get_user(username: str):
-    query = users.select().where(users.c.username == username)
-    record = await database.fetch_one(query)
-    if record is None:
-        return None, None
-    return User(username=username, user_id=record.user_id), record.password
 
 
 async def authenticate_user(username, password: str):
@@ -147,16 +135,24 @@ async def create_account(
     new_account: NewAccount, user: User = Depends(get_current_user)
 ):
     query = accounts.insert().values(
+        account_id=create_random_id(),
         account_number=new_account.account_number,
         bank=new_account.bank,
         user_id=user.user_id,
     )
     account_id = await database.execute(query)
+    new_owners = []
     for owner in new_account.owners:
-        query = owners.insert().values(account_id=account_id, fullname=owner)
-        await database.execute(query)
+        query = owners.insert().values(
+            owner_id=create_random_id(),
+            account_id=account_id,
+            fullname=owner,
+        )
+        owner_id = await database.execute(query)
+        new_owners.append({"owner_id": owner_id, "name": owner})
     account = new_account.dict()
     account["account_id"] = account_id
+    account["owners"] = new_owners
     return account
 
 
@@ -169,6 +165,7 @@ async def get_accounts(user: User = Depends(get_current_user)):
                 accounts.c.account_id,
                 accounts.c.account_number,
                 owners.c.fullname,
+                owners.c.owner_id,
             ]
         )
         .select_from(
@@ -188,107 +185,170 @@ async def get_accounts(user: User = Depends(get_current_user)):
                     "bank": record[0],
                     "account_number": record[2],
                     "account_id": record[1],
-                    "owners": [record[3]],
+                    "owners": [{"name": record[3], "owner_id": record[4]}],
                 }
             )
         else:
-            account_models[-1]["owners"].append(record[3])
+            account_models[-1]["owners"].append(
+                {"name": record[3], "owner_id": record[4]}
+            )
         previous_account_id = record[1]
 
     return {"accounts": account_models}
 
 
-@app.post("/stock", response_model=Stock)
+@app.put("/stock", response_model=Stock)
 async def create_stock(new_stock: NewStock, _: User = Depends(get_current_user)):
-    query = currency.select().where(currency.c.iso_currency == new_stock.currency)
-    currency_record = await database.fetch_one(query)
-    stock_record = None
-    if currency_record is None:
-        if new_stock.currency == DEFAULT_CURRENCY:
-            last_rate = 1
-        else:
-            symbol = f"{DEFAULT_CURRENCY}{new_stock.currency}=X"
-            try:
-                quotes = await get_yahoo_quote([symbol])
-            except YahooError:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Call to provider unsuccessful",
-                )
-            if symbol not in quotes:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Symbol {symbol} doesn't exist",
-                )
-            last_rate = quotes[symbol]
-        query = currency.insert().values(
-            iso_currency=new_stock.currency, last_rate=last_rate
-        )
-        currency_id = await database.execute(query)
-    else:
-        currency_id = currency_record.currency_id
-        query = (
-            stocks.select()
-            .where(stocks.c.isin == new_stock.isin)
-            .where(stocks.c.market == new_stock.market)
-            .where(stocks.c.symbol == new_stock.symbol)
-            .where(stocks.c.currency_id == currency_id)
-        )
-        stock_record = await database.fetch_one(query)
+    # query the database to check if stock already exists
+    query = (
+        stocks.select()
+        .where(stocks.c.isin == new_stock.isin)
+        .where(stocks.c.symbol == new_stock.symbol)
+    )
+    stock_record = await database.fetch_one(query)
+
     if stock_record is None:
-        last_price = 0
+        # stock not found in the database, calling yahoo to get stock info
+        stock_symbol = new_stock.symbol.upper()
+        stock_info = await call_yahoo_from_view(stock_symbol)
+        iso_currency = stock_info[YAHOO_FIELD_CURRENCY]
+
+        # check if currency already exists in database
+        query = currency.select().where(currency.c.iso_currency == iso_currency)
+        currency_record = await database.fetch_one(query)
+
+        if currency_record is None:
+            # handle if currency does not exist
+            # if stock currency is the default one use last rate of 1
+            last_rate = 1
+            symbol = None
+            if iso_currency != DEFAULT_CURRENCY:
+                # if stock currency is not the default one call yahoo
+                #  to get currency info
+                symbol = f"{DEFAULT_CURRENCY}{iso_currency}=X".upper()
+                currency_info = await call_yahoo_from_view(symbol)
+                last_rate = currency_info[YAHOO_FIELD_PRICE]
+            # save currency record in the database and get the record id
+            query = currency.insert().values(
+                currency_id=create_random_id(),
+                iso_currency=iso_currency,
+                last_rate=last_rate,
+                symbol=symbol,
+                last_update=datetime.utcnow(),
+            )
+            currency_id = await database.execute(query)
+        else:
+            # if currency exists just save the id (needed for stock creation)
+            currency_id = currency_record.currency_id
+
+        # create stock record
         query = stocks.insert().values(
+            stock_id=create_random_id(),
             currency_id=currency_id,
             isin=new_stock.isin,
-            market=new_stock.market,
-            symbol=new_stock.symbol,
-            last_price=last_price,
+            market=stock_info[YAHOO_FIELD_MARKET],
+            symbol=stock_symbol,
+            last_price=stock_info[YAHOO_FIELD_PRICE],
+            last_update=datetime.utcnow(),
         )
         stock_id = await database.execute(query)
     else:
+        # if stock record exists already just save the id
         stock_id = stock_record.stock_id
-        last_price = stock_record.last_price
+
+    # create response dict from body model and add stock id to it
     stock = new_stock.dict()
-    stock["last_price"] = last_price
     stock["stock_id"] = stock_id
+
     return stock
 
 
-@app.post("/stock/{stock_id}/transaction", response_model=StockTransaction)
+@app.put(
+    "/account/{owner_id}/transaction/stock",
+    response_model=StockTransaction,
+)
 async def create_stock_transaction(
-    stock_id: int,
+    owner_id: int,
     new_stock_transaction: NewStockTransaction,
     user: User = Depends(get_current_user),
 ):
-    query = stocks.select().where(stocks.c.stock_id == stock_id)
+    query = stocks.select().where(stocks.c.stock_id == new_stock_transaction.stock_id)
     record = await database.fetch_one(query)
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Stock id {stock_id} doesn't exist",
+            detail=f"Stock id {new_stock_transaction.stock_id} doesn't exist",
         )
-    query = (
-        accounts.select()
-        .where(accounts.c.account_id == new_stock_transaction.account_id)
-        .where(accounts.c.user_id == user.user_id)
-    )
-    record = await database.fetch_one(query)
-    if record is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Account_id {new_stock_transaction.account_id} doesn't exist",
-        )
+    await get_owner(user.user_id, owner_id)
     query = stock_transactions.insert().values(
-        stock_id=stock_id,
-        account_id=new_stock_transaction.account_id,
+        stock_transaction_id=create_random_id(),
+        stock_id=new_stock_transaction.stock_id,
         price=new_stock_transaction.price,
         quantity=new_stock_transaction.quantity,
         tax=new_stock_transaction.tax,
         commission=new_stock_transaction.commission,
         transaction_type=new_stock_transaction.transaction_type,
         date=new_stock_transaction.date,
+        owner_id=owner_id,
     )
     stock_transaction_id = await database.execute(query)
     stock_transaction = new_stock_transaction.dict()
     stock_transaction["stock_transaction_id"] = stock_transaction_id
     return stock_transaction
+
+
+@app.get(
+    "/account/{owner_id}/transaction/stock",
+    response_model=TradedStocks,
+)
+async def get_traded_stocks(
+    owner_id: int,
+    user: User = Depends(get_current_user),
+):
+    await get_owner(user.user_id, owner_id)
+    query = (
+        select(
+            [
+                stocks.c.stock_id,
+                currency.c.iso_currency,
+                currency.c.last_rate,
+                stocks.c.isin,
+                stocks.c.symbol,
+                stocks.c.last_price,
+                stocks.c.market,
+            ]
+        )
+        .select_from(
+            stock_transactions.join(
+                stocks, stock_transactions.c.stock_id == stocks.c.stock_id
+            ).join(currency, currency.c.currency_id == stocks.c.currency_id)
+        )
+        .where(stock_transactions.c.owner_id == owner_id)
+    )
+    records = await database.fetch_all(query)
+    traded_stocks = {"stocks": []}
+    for record in records:
+        traded_stocks["stocks"].append(
+            {
+                "stock_id": record[0],
+                "currency": record[1],
+                "last_rate": record[2],
+                "isin": record[3],
+                "symbol": record[4],
+                "last_price": record[5],
+                "market": record[6],
+            }
+        )
+    return traded_stocks
+
+
+@app.get(
+    "/account/{owner_id}/transaction/stock/{stock_id}",
+    response_model=StockTransactionHistory,
+)
+async def get_stock_transaction_history(
+    owner_id: int,
+    stock_id: int,
+    user: User = Depends(get_current_user),
+):
+    await get_owner(user.user_id, owner_id)
