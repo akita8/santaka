@@ -22,6 +22,7 @@ from santaka.models import (
     Stock,
     Account,
     Token,
+    TransactionType,
     User,
     NewStockTransaction,
     StockTransaction,
@@ -175,7 +176,9 @@ async def get_accounts(user: User = Depends(get_current_user)):
         )
         .where(users.c.user_id == user.user_id)
     )
-    records = await database.fetch_all(query)
+    records = await database.fetch_all(
+        query
+    )  # Fab: It takes all rows of the database based on previous query
     account_models = []
     previous_account_id = None
     for record in records:
@@ -202,7 +205,9 @@ async def create_stock(new_stock: NewStock, _: User = Depends(get_current_user))
     # query the database to check if stock already exists
     query = (
         stocks.select()
-        .where(stocks.c.isin == new_stock.isin)
+        .where(
+            stocks.c.isin == new_stock.isin
+        )  # TODO maybe make isin symbol composite primary key
         .where(stocks.c.symbol == new_stock.symbol)
     )
     stock_record = await database.fetch_one(query)
@@ -272,14 +277,48 @@ async def create_stock_transaction(
     new_stock_transaction: NewStockTransaction,
     user: User = Depends(get_current_user),
 ):
+    await get_owner(user.user_id, owner_id)
     query = stocks.select().where(stocks.c.stock_id == new_stock_transaction.stock_id)
-    record = await database.fetch_one(query)
+    record = await database.fetch_one(
+        query
+    )  # Fab: fetch_one takes only the first reccord
     if record is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Stock id {new_stock_transaction.stock_id} doesn't exist",
         )
-    await get_owner(user.user_id, owner_id)
+    # added validation, first transaction has to be a buy
+    # and when you have a sell the quantity must be less than the total held
+    # (query the stock_transactions table filtering it by owner_id and stock_id
+    # than if the list is empty just check that the request body transaction_type is buy
+    # if it is not empty and the transaction_type is sell sum the transactions
+    # quantities, taking in account sells and buys,
+    # and check that the sum is equal or greater than request body quantity)
+    query = (
+        stock_transactions.select()
+        .where(stock_transactions.c.owner_id == owner_id)
+        .where(stock_transactions.c.stock_id == new_stock_transaction.stock_id)
+    )
+    # Fab: fetch_all returns a list of records that match the query
+    records = await database.fetch_all(query)
+    if not records and new_stock_transaction.transaction_type == TransactionType.sell:
+        # fab:  >> if not << this sentence is the right way to identify an empty list
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="First transaction mast be a buy",
+        )
+    if records and new_stock_transaction.transaction_type == TransactionType.sell:
+        quantity = 0
+        for record in records:
+            if record.transaction_type == TransactionType.sell.value:
+                quantity -= record.quantity
+            else:
+                quantity += record.quantity
+        if quantity < new_stock_transaction.quantity:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Cannot sell more than {quantity} stocks",
+            )
     query = stock_transactions.insert().values(
         stock_transaction_id=create_random_id(),
         stock_id=new_stock_transaction.stock_id,

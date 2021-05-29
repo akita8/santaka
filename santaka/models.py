@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, conlist
+from pydantic import BaseModel, conlist, Field
 
 
 class Token(BaseModel):
@@ -22,7 +22,7 @@ class Owner(BaseModel):
 
 
 class NewAccount(BaseModel):
-    owners: conlist(str, min_items=1)
+    owners: conlist(str, min_items=1)  # fab: checks that exists at least one owner
     bank: str
     account_number: str
 
@@ -50,14 +50,17 @@ class TransactionType(str, Enum):
     sell = "sell"
 
 
-class NewStockTransaction(BaseModel):
-    stock_id: int
-    price: Decimal
-    quantity: int
+class Transaction(BaseModel):
+    price: Decimal = Field(gt=0)
+    quantity: int = Field(gt=0)
     tax: Decimal = 0
     commission: Decimal = 0
     date: datetime
     transaction_type: TransactionType
+
+
+class NewStockTransaction(Transaction):
+    stock_id: int
 
 
 class StockTransaction(NewStockTransaction):
