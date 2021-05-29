@@ -1,15 +1,18 @@
-# from decimal import Decimal
+from datetime import datetime
+from decimal import Decimal as D
 
-# from pytest import approx, mark
+from pytest import approx, mark
 
+from santaka.models import TransactionType, Transaction, SplitEvent
+from santaka.analytics import calculate_fiscal_price
 
 # @mark.parametrize(
 #     "price,last_price,operation,message_expected,error_expected",
 #     [
-#         (13.5, 13.42, Operation.BUY, True, False),
-#         (13.42, 13.5, Operation.SELL, True, False),
+#         (13.5, 13.42, TransactionType.buy, True, False),
+#         (13.42, 13.5, TransactionType.sell, True, False),
 #         (13.5, 13.42, Operation.NOP, False, False),
-#         (0, 13.42, Operation.BUY, False, True),
+#         (0, 13.42, TransactionType.buy, False, True),
 #     ],
 # )
 # def test_alert_check_price(
@@ -73,105 +76,294 @@
 #     assert approx(response.coupon_yield, 0.01) == expected
 
 
+@mark.parametrize(
+    "transactions,split_events,expected_fiscal_price",
+    (
+        (
+            (
+                (TransactionType.buy, 5, D("108.62"), D("11.97"), 0),
+                (TransactionType.sell, 2, D("277"), D("12.13"), 0),
+                (TransactionType.buy, 2, D("262.94"), D("11.97"), 0),
+            ),
+            [],
+            D("174.1784"),
+        ),
+        (
+            (
+                (TransactionType.buy, 50, D("31.65"), D("15.19"), 0),
+                (TransactionType.buy, 30, D("46.71"), D("16.76"), 0),
+                (TransactionType.buy, 20, D("51.78"), D("15.98"), 0),
+                (TransactionType.buy, 20, D("50.00"), D("17.08"), 0),
+                (TransactionType.buy, 20, D("40.30"), D("17.09"), 0),
+            ),
+            [],
+            D("42.196"),
+        ),
+        (
+            (
+                (TransactionType.buy, 500, D("3.994"), D("8"), 0),
+                (TransactionType.buy, 500, D("3.6"), D("8"), 0),
+                (TransactionType.sell, 900, D("4.58"), D("0"), 0),
+                (TransactionType.sell, 100, D("4.579"), D("8"), 0),
+                (TransactionType.buy, 1000, D("4.4"), D("8"), 0),
+                (TransactionType.sell, 500, D("4.84"), D("8"), 0),
+                (TransactionType.sell, 500, D("4.887"), D("8"), 0),
+                (TransactionType.buy, 700, D("4.073"), D("8"), 0),
+                (TransactionType.sell, 700, D("4.77"), D("8"), 0),
+                (TransactionType.buy, 200, D("4.33"), D("8"), 0),
+                (TransactionType.buy, 500, D("4.26"), D("8"), 0),
+            ),
+            [],
+            D("4.3029"),
+        ),
+        (
+            (
+                (TransactionType.buy, 3, D("151.1799"), D("12.5"), 0),
+                (TransactionType.buy, 2, D("296.981"), D("11.99"), 0),
+            ),
+            [],
+            D("214.3983"),
+        ),
+        (
+            (
+                (TransactionType.buy, 3, D("151.1799"), D("12.5"), 1546036022),
+                (TransactionType.buy, 2, D("296.981"), D("11.99"), 1582928822),
+            ),
+            [(1598826422, 4)],
+            D("53.598"),
+        ),
+        (
+            (
+                (TransactionType.buy, 3, D("151.1799"), D("12.5"), 1546036022),
+                (TransactionType.buy, 2, D("296.981"), D("11.99"), 1582928822),
+                (TransactionType.buy, 5, D("132.000"), D("11.99"), 1612202877),
+            ),
+            [(1598826422, 4)],
+            D("69.7585"),
+        ),
+        (
+            (
+                (TransactionType.buy, 2000, D("99.93"), 0, 0),
+                (TransactionType.buy, 1000, D("99.53"), 0, 0),
+                (TransactionType.buy, 1000, D("99.98"), 0, 0),
+            ),
+            None,
+            D("99.8425"),
+        ),
+        (
+            (
+                (TransactionType.buy, 1000, D("95.76"), 0, 0),
+                (TransactionType.buy, 1000, D("93.76"), 0, 0),
+                (TransactionType.buy, 2000, D("99.94"), 0, 0),
+                (TransactionType.buy, 2000, D("99.27"), 0, 0),
+                (TransactionType.sell, 1000, D("91.09"), 0, 0),
+                (TransactionType.sell, 1000, D("92.89"), 0, 0),
+                (TransactionType.sell, 1000, D("93.92"), 0, 0),
+                (TransactionType.buy, 1000, D("89.37"), 0, 0),
+                (TransactionType.sell, 1000, D("81.95"), 0, 0),
+                (TransactionType.sell, 1000, D("100.02"), 0, 0),
+            ),
+            None,
+            D("95.835"),
+        ),
+    ),
+)
+def test_calculate_stock_fiscal_price(
+    transactions, split_events, expected_fiscal_price
+):
+    transaction_dicts = []
+    for transaction in transactions:
+        transaction_dicts.append(
+            Transaction(
+                transaction_type=transaction[0],
+                quantity=transaction[1],
+                price=transaction[2],
+                commission=transaction[3],
+                date=datetime.fromtimestamp(transaction[4]),
+            )
+        )
+    split_events_dicts = None
+    if split_events:
+        split_events_dicts = []
+        for event in split_events:
+            split_events_dicts.append(
+                SplitEvent(date=datetime.fromtimestamp(event[0]), factor=event[1])
+            )
+    response = calculate_fiscal_price(transaction_dicts, split_events_dicts)
+    assert approx(response, D("0.01")) == expected_fiscal_price
+
+
+@mark.parametrize(
+    [
+        # these are the names of the parameters the test will expect
+        # (can also be passed as a string of comma separated names)
+        "fiscal_price",
+        "last_price",
+        "buy_tax",
+        "sell_tax",
+        "sell_commission",
+        "quantity",
+        "expected_profit_and_loss",
+    ],
+    [  # this is the list of test cases
+        [
+            D("0"),
+            D("0"),
+            D("0"),
+            D("0"),
+            D("0"),
+            0,
+            D("0"),
+        ],  # first test case, put adeguate parameters in this list these are
+    ],
+)
+def test_calculate_profit_and_loss(
+    fiscal_price,
+    last_price,
+    buy_tax,
+    sell_tax,
+    sell_commission,
+    quantity,
+    expected_profit_and_loss,
+):
+    # To implement the test import the function you want to test
+    # then call the function with the correct parameters
+    # (hint: look at the function signature)
+    # than assert that the result is the correct one (hint: look at other tests)
+    pass
+
+
 # @mark.parametrize(
-#     "transactions,expected_fiscal_price,error_expected",
-#     (
-#         (
-#             (
-#                 (Operation.BUY, 5, 108.62, 11.97),
-#                 (Operation.SELL, 2, 277, 12.13),
-#                 (Operation.BUY, 2, 262.94, 11.97),
-#             ),
-#             174.1784,
-#             False,
-#         ),
-#         (
-#             (
-#                 (
-#                     Operation.BUY,
-#                     500,
-#                     3.994,
-#                     8,
-#                 ),
-#                 (
-#                     Operation.BUY,
-#                     500,
-#                     3.6,
-#                     8,
-#                 ),
-#                 (Operation.SELL, 900, 4.58, 0),
-#                 (Operation.SELL, 100, 4.579, 8),
-#                 (
-#                     Operation.BUY,
-#                     1000,
-#                     4.4,
-#                     8,
-#                 ),
-#                 (Operation.SELL, 500, 4.84, 8),
-#                 (Operation.SELL, 500, 4.887, 8),
-#                 (
-#                     Operation.BUY,
-#                     700,
-#                     4.073,
-#                     8,
-#                 ),
-#                 (Operation.SELL, 700, 4.77, 8),
-#                 (Operation.BUY, 200, 4.33, 8),
-#                 (Operation.BUY, 500, 4.26, 8),
-#             ),
-#             4.3029,
-#             False,
-#         ),
-#         (
-#             ((Operation.BUY, 3, 151.1799, 12.5), (Operation.BUY, 2, 296.981, 11.99)),
-#             214.3983,
-#             False,
-#         ),
-#         ((), 0, True),
-#         (((Operation.SELL, 2, 100, 12),), 0, True),
-#         (((Operation.BUY, -5, 100, 8),), 0, True),
-#     ),
+#     "price,last_price,operation,message_expected,error_expected",
+#     [
+#         (13.5, 13.42, Operation.BUY, True, False),
+#         (13.42, 13.5, Operation.SELL, True, False),
+#         (13.5, 13.42, Operation.NOP, False, False),
+#         (0, 13.42, Operation.BUY, False, True),
+#     ],
 # )
-# def test_calculate_stock_fiscal_price(
-#     transactions, expected_fiscal_price, error_expected
+# def test_alert_check_price(
+#     price, last_price, operation, message_expected, error_expected
 # ):
-#     service = FiscalPriceService()
-#     request = StockFiscalPriceRequest()
-#     for transaction in transactions:
-#         transaction_obj = request.transactions.add()
-#         transaction_obj.operation = transaction[0]
-#         transaction_obj.quantity = transaction[1]
-#         transaction_obj.price = transaction[2]
-#         transaction_obj.commission = transaction[3]
-#     response = service.CalculateStockFiscalPrice(request)
-#     assert approx(response.fiscal_price, 0.01) == expected_fiscal_price
+#     service = AlertService()
+#     request = PriceAlertRequest()
+#     request.price = price
+#     request.last_price = last_price
+#     request.operation = operation
+#     response = service.CheckPrice(request)
+#     assert bool(response.message) is message_expected
 #     assert bool(response.error.message) is error_expected
 
 
 # @mark.parametrize(
-#     "transactions,expected_fiscal_price,error_expected",
-#     (
-#         (
-#             (
-#                 (Operation.BUY, 2000, 99.93),
-#                 (Operation.BUY, 1000, 99.53),
-#                 (Operation.BUY, 1000, 99.98),
-#             ),
-#             99.8425,
-#             False,
-#         ),
-#     ),
+#     "expiration_date,current_date,message_expected",
+#     [
+#         (1608982515, 1609587567, True),
+#         (1612265967, 1609587567, False),
+#     ],
 # )
-# def test_calculate_bond_fiscal_price(
-#     transactions, expected_fiscal_price, error_expected
+# def test_alert_check_expiration(expiration_date, current_date, message_expected):
+#     service = AlertService()
+#     request = ExpirationAlertRequest()
+#     request.expiration_date = expiration_date
+#     request.current_date = current_date
+#     response = service.CheckExpiration(request)
+#     assert bool(response.message) is message_expected
+#     assert not response.error.message
+
+
+# @mark.parametrize(
+#     "price,maturity_date,current_date,next_coupon_rate,\
+#     invested,next_coupon_tax,payment_frequency,error_expected,expected",
+#     [
+#         (
+#             100.15,
+#             1616067567,
+#             1611435962,
+#             0.0125,
+#             10000,
+#             0.0015625,
+#             PaymentFrequency.SIX_MONTHS,
+#             False,
+#             0,
+#         ),
+#         (
+#             0,
+#             1616067567,
+#             1609611915,
+#             0.0125,
+#             10000,
+#             0.0015625,
+#             PaymentFrequency.ONE_YEAR,
+#             True,
+#             0,
+#         ),
+#         (
+#             132.0329,
+#             3066233698,
+#             1610619080,
+#             0.028,
+#             10000,
+#             0.0035,
+#             PaymentFrequency.ONE_YEAR,
+#             False,
+#             175.17,
+#         ),
+#         (
+#             126.94,
+#             1898590280,
+#             1610619080,
+#             0.035,
+#             10000,
+#             0.004375,
+#             PaymentFrequency.ONE_YEAR,
+#             False,
+#             11.23,
+#         ),
+#         (
+#             132.0329,
+#             3066233698,
+#             1610619080,
+#             0.014,
+#             10000,
+#             0.00175,
+#             PaymentFrequency.SIX_MONTHS,
+#             False,
+#             175.17,
+#         ),
+#         (
+#             114.2407,
+#             1801947962,
+#             1611435962,
+#             0.009,
+#             10000,
+#             0.001125,
+#             PaymentFrequency.THREE_MONTHS,
+#             False,
+#             79.27,
+#         ),
+#     ],
+# )
+# def test_calculate_coupon_yield(
+#     price,
+#     maturity_date,
+#     current_date,
+#     next_coupon_rate,
+#     invested,
+#     next_coupon_tax,
+#     payment_frequency,
+#     error_expected,
+#     expected,
 # ):
-#     service = FiscalPriceService()
-#     request = BondFiscalPriceRequest()
-#     for transaction in transactions:
-#         transaction_obj = request.transactions.add()
-#         transaction_obj.operation = transaction[0]
-#         transaction_obj.quantity = transaction[1]
-#         transaction_obj.price = transaction[2]
-#     response = service.CalculateBondFiscalPrice(request)
-#     assert approx(response.fiscal_price, 0.01) == expected_fiscal_price
+#     service = CouponYieldService()
+#     request = CouponYieldRequest()
+#     request.price = price
+#     request.maturity_date = maturity_date
+#     request.current_date = current_date
+#     request.next_coupon_rate = next_coupon_rate
+#     request.invested = invested
+#     request.next_coupon_tax = next_coupon_tax
+#     request.payment_frequency = payment_frequency
+#     response = service.CalculateCouponYield(request)
 #     assert bool(response.error.message) is error_expected
+#     assert approx(response.coupon_yield, 0.01) == expected

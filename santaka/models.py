@@ -80,3 +80,8 @@ class DetailedStock(Stock):
 
 class TradedStocks(BaseModel):
     stocks: List[DetailedStock]
+
+
+class SplitEvent(BaseModel):
+    date: datetime
+    factor: int = Field(gt=0)
