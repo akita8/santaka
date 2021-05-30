@@ -4,7 +4,7 @@ from decimal import Decimal as D
 from pytest import approx, mark
 
 from santaka.models import TransactionType, Transaction, SplitEvent
-from santaka.analytics import calculate_fiscal_price
+from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 
 # @mark.parametrize(
 #     "price,last_price,operation,message_expected,error_expected",
@@ -207,13 +207,13 @@ def test_calculate_stock_fiscal_price(
     ],
     [  # this is the list of test cases
         [
+            D("24.7"),
+            D("38.59"),
             D("0"),
             D("0"),
-            D("0"),
-            D("0"),
-            D("0"),
-            0,
-            D("0"),
+            D("8"),
+            20,
+            D("269.8"),
         ],  # first test case, put adeguate parameters in this list these are
     ],
 )
@@ -230,7 +230,15 @@ def test_calculate_profit_and_loss(
     # then call the function with the correct parameters
     # (hint: look at the function signature)
     # than assert that the result is the correct one (hint: look at other tests)
-    pass
+    result = calculate_profit_and_loss(
+        fiscal_price,
+        last_price,
+        buy_tax,
+        sell_tax,
+        sell_commission,
+        quantity,
+    )
+    assert approx(result, D("0.01")) == expected_profit_and_loss
 
 
 # @mark.parametrize(

@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.sql import select
 from jose import JWTError, jwt
+from uvicorn import run
 
 from santaka.db import (
     database,
@@ -28,6 +29,7 @@ from santaka.models import (
     StockTransaction,
     StockTransactionHistory,
     TradedStocks,
+    Transaction,
 )
 from santaka.utils import (
     call_yahoo_from_view,
@@ -38,7 +40,9 @@ from santaka.utils import (
     get_owner,
     create_random_id,
     verify_password,
+    validate_stock_transaction,
 )
+from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 
 
 # the default value for SECRET_KEY and ACCESS_TOKEN_EXPIRE_MINUTES are only for dev,
@@ -301,24 +305,7 @@ async def create_stock_transaction(
     )
     # Fab: fetch_all returns a list of records that match the query
     records = await database.fetch_all(query)
-    if not records and new_stock_transaction.transaction_type == TransactionType.sell:
-        # fab:  >> if not << this sentence is the right way to identify an empty list
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="First transaction mast be a buy",
-        )
-    if records and new_stock_transaction.transaction_type == TransactionType.sell:
-        quantity = 0
-        for record in records:
-            if record.transaction_type == TransactionType.sell.value:
-                quantity -= record.quantity
-            else:
-                quantity += record.quantity
-        if quantity < new_stock_transaction.quantity:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Cannot sell more than {quantity} stocks",
-            )
+    validate_stock_transaction(records, new_stock_transaction)
     query = stock_transactions.insert().values(
         stock_transaction_id=create_random_id(),
         stock_id=new_stock_transaction.stock_id,
@@ -355,6 +342,12 @@ async def get_traded_stocks(
                 stocks.c.symbol,
                 stocks.c.last_price,
                 stocks.c.market,
+                stock_transactions.c.transaction_type,
+                stock_transactions.c.quantity,
+                stock_transactions.c.price,
+                stock_transactions.c.commission,
+                stock_transactions.c.date,
+                stock_transactions.c.tax,
             ]
         )
         .select_from(
@@ -363,21 +356,59 @@ async def get_traded_stocks(
             ).join(currency, currency.c.currency_id == stocks.c.currency_id)
         )
         .where(stock_transactions.c.owner_id == owner_id)
+        .order_by(stocks.c.stock_id)
     )
     records = await database.fetch_all(query)
     traded_stocks = {"stocks": []}
-    for record in records:
-        traded_stocks["stocks"].append(
-            {
-                "stock_id": record[0],
-                "currency": record[1],
-                "last_rate": record[2],
-                "isin": record[3],
-                "symbol": record[4],
-                "last_price": record[5],
-                "market": record[6],
-            }
-        )
+    previous_stock_id = None
+    if records:
+        previous_stock_id = records[0][0]
+        records.append([None])  # this triggers the addition of the last stock
+    current_transactions = []
+    current_buy_tax = 0
+    current_quantity = 0
+    for i, record in enumerate(records):
+        if previous_stock_id == record[0]:
+            if record[7] == TransactionType.buy.value:
+                current_buy_tax += record[12]
+                current_quantity += record[8]
+            else:
+                current_quantity -= record[8]
+
+        else:
+            previous_stock_id = record[0]
+            fiscal_price = calculate_fiscal_price(current_transactions)
+            current_transactions = []
+            # TODO add sell tax and commissions calculation  replace the zeros)
+            profit_and_loss = calculate_profit_and_loss(
+                fiscal_price, records[i - 1][5], current_buy_tax, 0, 0, current_quantity
+            )
+            current_buy_tax = 0
+            current_quantity = 0
+
+            traded_stocks["stocks"].append(
+                {
+                    "stock_id": records[i - 1][0],
+                    "currency": records[i - 1][1],
+                    "last_rate": records[i - 1][2],
+                    "isin": records[i - 1][3],
+                    "symbol": records[i - 1][4],
+                    "last_price": records[i - 1][5],
+                    "market": records[i - 1][6],
+                    "fiscal_price": fiscal_price,
+                    "profit_and_loss": profit_and_loss,
+                }
+            )
+        if i != len(records) - 1:
+            current_transactions.append(
+                Transaction(
+                    transaction_type=record[7],
+                    quantity=record[8],
+                    price=record[9],
+                    commission=record[10],
+                    date=record[11],
+                )
+            )
     return traded_stocks
 
 
@@ -391,3 +422,30 @@ async def get_stock_transaction_history(
     user: User = Depends(get_current_user),
 ):
     await get_owner(user.user_id, owner_id)
+
+    query = (
+        stock_transactions.select()
+        .where(stock_transactions.c.owner_id == owner_id)
+        .where(stock_transactions.c.stock_id == stock_id)
+    )
+    # Fab: fetch_all returns a list of records that match the query
+    records = await database.fetch_all(query)
+    history = {"transactions": []}
+    for transaction in records:
+        history["transactions"].append(
+            {
+                "price": transaction.price,
+                "quantity": transaction.quantity,
+                "tax": transaction.tax,
+                "commission": transaction.commission,
+                "date": transaction.date,
+                "transaction_type": transaction.transaction_type,
+                "stock_id": stock_id,
+                "stock_transaction_id": transaction.stock_transaction_id,
+            }
+        )
+    return history
+
+
+if __name__ == "__main__":
+    run(app, host="0.0.0.0", port=8000)

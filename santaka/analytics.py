@@ -7,7 +7,12 @@ from santaka.models import Transaction, TransactionType, SplitEvent
 
 
 def calculate_profit_and_loss(
-    fiscal_price, last_price, buy_tax, sell_tax, sell_commission: Decimal, quantity: int
+    fiscal_price: Decimal,
+    last_price: Decimal,
+    buy_tax: Decimal,
+    sell_tax: Decimal,
+    sell_commission: Decimal,
+    quantity: int,
 ) -> Decimal:
     # TODO implement tests (see test/test_analytics.py)
     bought = quantity * fiscal_price + buy_tax

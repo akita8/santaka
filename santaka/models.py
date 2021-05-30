@@ -76,6 +76,8 @@ class DetailedStock(Stock):
     currency: str
     last_price: Decimal
     last_rate: Decimal
+    fiscal_price: Decimal
+    profit_and_loss: Decimal
 
 
 class TradedStocks(BaseModel):

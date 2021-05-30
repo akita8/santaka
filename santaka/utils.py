@@ -7,7 +7,7 @@ from sqlalchemy.sql import select
 from passlib.context import CryptContext
 
 from santaka.db import database, accounts, owners, users
-from santaka.models import User
+from santaka.models import User, NewStockTransaction, TransactionType
 
 YAHOO_QUOTE_URL = "https://query1.finance.yahoo.com/v7/finance/quote"
 YAHOO_FIELD_PRICE = "regularMarketPrice"
@@ -93,7 +93,7 @@ def verify_password(plain_password, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-async def create_user(username, password: str):
+async def create_user(username: str, password: str):
     hashed_password = pwd_context.hash(password)
     query = users.insert().values(
         user_id=create_random_id(), username=username, password=hashed_password
@@ -108,3 +108,24 @@ async def get_user(username: str):
     if record is None:
         return None, None
     return User(username=username, user_id=record.user_id), record.password
+
+
+def validate_stock_transaction(records, transaction: NewStockTransaction):
+    if not records and transaction.transaction_type == TransactionType.sell:
+        # fab:  >> if not << this sentence is the right way to identify an empty list
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="First transaction mast be a buy",
+        )
+    if records and transaction.transaction_type == TransactionType.sell:
+        quantity = 0
+        for record in records:
+            if record.transaction_type == TransactionType.sell.value:
+                quantity -= record.quantity
+            else:
+                quantity += record.quantity
+        if quantity < transaction.quantity:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Cannot sell more than {quantity} stocks",
+            )
