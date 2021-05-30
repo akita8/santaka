@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-fastapi = "^0.60.2"
+fastapi = "^0.65.1"
 databases = "^0.4.3"
 uvicorn = "^0.13.4"
 aiosqlite = "^0.17.0"

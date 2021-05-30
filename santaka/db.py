@@ -1,3 +1,5 @@
+from random import randint
+
 import sqlalchemy
 from databases import Database
 
@@ -12,6 +14,7 @@ users = sqlalchemy.Table(
     sqlalchemy.Column("user_id", sqlalchemy.Integer, primary_key=True),
     sqlalchemy.Column("username", sqlalchemy.String, unique=True, nullable=False),
     sqlalchemy.Column("password", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("base_currency", sqlalchemy.String, nullable=False),
 )
 
 accounts = sqlalchemy.Table(
@@ -145,3 +148,7 @@ engine = sqlalchemy.create_engine(
 )
 metadata.create_all(engine)
 database = Database(DATABASE_URL)
+
+
+def create_random_id(length: int = 15):
+    return randint(10 ** (length - 1), (10 ** (length) - 1))

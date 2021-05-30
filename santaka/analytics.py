@@ -3,7 +3,7 @@ from typing import List, Optional
 
 # from datetime import datetime, timedelta
 
-from santaka.models import Transaction, TransactionType, SplitEvent
+from santaka.stock.models import Transaction, TransactionType, SplitEvent
 
 
 def calculate_profit_and_loss(

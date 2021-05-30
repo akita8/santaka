@@ -3,37 +3,7 @@ from typing import List
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, conlist, Field
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class User(BaseModel):
-    username: str
-    user_id: int
-
-
-class Owner(BaseModel):
-    name: str
-    owner_id: int
-
-
-class NewAccount(BaseModel):
-    owners: conlist(str, min_items=1)  # fab: checks that exists at least one owner
-    bank: str
-    account_number: str
-
-
-class Account(NewAccount):
-    account_id: int
-    owners: List[Owner]
-
-
-class Accounts(BaseModel):
-    accounts: List[Account]
+from pydantic import BaseModel, Field
 
 
 class NewStock(BaseModel):

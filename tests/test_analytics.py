@@ -3,7 +3,7 @@ from decimal import Decimal as D
 
 from pytest import approx, mark
 
-from santaka.models import TransactionType, Transaction, SplitEvent
+from santaka.stock.models import TransactionType, Transaction, SplitEvent
 from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 
 # @mark.parametrize(
