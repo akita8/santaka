@@ -14,7 +14,6 @@ def calculate_profit_and_loss(
     sell_commission: Decimal,
     quantity: int,
 ) -> Decimal:
-    # TODO implement tests (see test/test_analytics.py)
     bought = quantity * fiscal_price + buy_tax
     sold = quantity * last_price - sell_commission - sell_tax
     return sold - bought

@@ -18,6 +18,8 @@ from santaka.stock.models import (
     StockTransaction,
     StockTransactionHistory,
     TradedStocks,
+    StockTransactionToDelete,
+    StockTransactionToUpdate,
 )
 
 YAHOO_QUOTE_URL = "https://query1.finance.yahoo.com/v7/finance/quote"
@@ -330,3 +332,50 @@ async def get_traded_stocks(
                 )
             )
     return traded_stocks
+
+
+@router.delete("/transaction")
+async def delete_stock_transaction(
+    transaction: StockTransactionToDelete, user: User = Depends(get_current_user)
+):
+    # TODO implement this endpoint: first create a select query
+    # and fetch (database.fetch_one) the transaction
+    # if the transaction doesn't exist raise HttpException with code 422,
+    # call get_owner that checks if the transaction belongs to the user
+    # finally create the delete query (similiar to select but with delete) and than
+    # execute it (example: await database.execute(query))
+    # there is no need to return anything just ending the function without
+    # exceptions returns a 200 code (success)
+    pass
+
+
+@router.patch("/transaction")
+async def update_stock_transaction(
+    transaction: StockTransactionToUpdate, user: User = Depends(get_current_user)
+):
+    query = stock_transactions.select().where(
+        stock_transactions.c.stock_transaction_id == transaction.stock_transaction_id
+    )
+    record = await database.fetch_one(query)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock transaction {transaction.stock_transaction_id} doesn't exist",
+        )
+    await get_owner(user.user_id, record.owner_id)
+    transaction_dict = transaction.dict()
+    values = {}
+    for key in transaction_dict:
+        if transaction_dict[key] is not None and key != "stock_transaction_id":
+            values[key] = transaction_dict[key]
+    if not values:
+        return
+    query = (
+        stock_transactions.update()
+        .where(
+            stock_transactions.c.stock_transaction_id
+            == transaction.stock_transaction_id
+        )
+        .values(**values)
+    )
+    await database.execute(query)

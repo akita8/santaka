@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
@@ -57,3 +57,17 @@ class TradedStocks(BaseModel):
 class SplitEvent(BaseModel):
     date: datetime
     factor: int = Field(gt=0)
+
+
+class StockTransactionToDelete(BaseModel):
+    stock_transaction_id: int
+
+
+class StockTransactionToUpdate(BaseModel):
+    stock_transaction_id: int
+    price: Optional[Decimal] = Field(gt=0, default=None)
+    quantity: Optional[int] = Field(gt=0, default=None)
+    tax: Optional[Decimal] = None
+    commission: Optional[Decimal] = None
+    date: Optional[datetime] = None
+    transaction_type: Optional[TransactionType] = None
