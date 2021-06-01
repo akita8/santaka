@@ -1,7 +1,5 @@
-from typing import List
 from datetime import datetime
 
-from aiohttp import ClientSession
 from fastapi import status, HTTPException, Depends, APIRouter
 from sqlalchemy.sql import select
 
@@ -21,74 +19,15 @@ from santaka.stock.models import (
     StockTransactionToDelete,
     StockTransactionToUpdate,
 )
-
-YAHOO_QUOTE_URL = "https://query1.finance.yahoo.com/v7/finance/quote"
-YAHOO_FIELD_PRICE = "regularMarketPrice"
-YAHOO_FIELD_MARKET = "fullExchangeName"
-YAHOO_FIELD_CURRENCY = "currency"
+from santaka.stock.utils import (
+    call_yahoo_from_view,
+    validate_stock_transaction,
+    YAHOO_FIELD_CURRENCY,
+    YAHOO_FIELD_MARKET,
+    YAHOO_FIELD_PRICE,
+)
 
 router = APIRouter(prefix="/stock", tags=["stock"])
-
-
-class YahooError(Exception):
-    pass
-
-
-async def get_yahoo_quote(symbols: List[str]):
-    async with ClientSession() as session:
-        async with session.get(
-            YAHOO_QUOTE_URL,
-            params={
-                "symbols": ",".join(symbols),
-                "fields": ",".join(
-                    [YAHOO_FIELD_PRICE, YAHOO_FIELD_CURRENCY, YAHOO_FIELD_MARKET]
-                ),
-            },
-        ) as resp:
-            if resp.status != 200:
-                raise YahooError()
-            response = await resp.json()
-    quotes = {}
-    for quote in response["quoteResponse"]["result"]:
-        quotes[quote["symbol"]] = quote
-    return quotes
-
-
-async def call_yahoo_from_view(symbol: str):
-    try:
-        quotes = await get_yahoo_quote([symbol])
-    except YahooError:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Call to provider unsuccessful",
-        )
-    if symbol not in quotes:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Symbol {symbol} doesn't exist",
-        )
-    return quotes[symbol]
-
-
-def validate_stock_transaction(records, transaction: NewStockTransaction):
-    if not records and transaction.transaction_type == TransactionType.sell:
-        # fab:  >> if not << this sentence is the right way to identify an empty list
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="First transaction mast be a buy",
-        )
-    if records and transaction.transaction_type == TransactionType.sell:
-        quantity = 0
-        for record in records:
-            if record.transaction_type == TransactionType.sell.value:
-                quantity -= record.quantity
-            else:
-                quantity += record.quantity
-        if quantity < transaction.quantity:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Cannot sell more than {quantity} stocks",
-            )
 
 
 @router.put("/", response_model=Stock)
@@ -338,6 +277,21 @@ async def get_traded_stocks(
 async def delete_stock_transaction(
     transaction: StockTransactionToDelete, user: User = Depends(get_current_user)
 ):
+    query = stock_transactions.select().where(
+        stock_transactions.c.stock_transaction_id == transaction.stock_transaction_id
+    )
+    record = await database.fetch_one(query)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock transaction {transaction.stock_transaction_id} doesn't exist",
+        )
+    await get_owner(user.user_id, record.owner_id)
+    query = stock_transactions.delete().where(
+        stock_transactions.c.stock_transaction_id == transaction.stock_transaction_id
+    )
+    await database.execute(query)
+
     # TODO implement this endpoint: first create a select query
     # and fetch (database.fetch_one) the transaction
     # if the transaction doesn't exist raise HttpException with code 422,
@@ -346,7 +300,6 @@ async def delete_stock_transaction(
     # execute it (example: await database.execute(query))
     # there is no need to return anything just ending the function without
     # exceptions returns a 200 code (success)
-    pass
 
 
 @router.patch("/transaction")
