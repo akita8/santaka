@@ -24,8 +24,8 @@ class Owner(BaseModel):
 
 class Bank(str, Enum):
     FINECOBANK = "fineco"
-    BG_SAXO = "BG_SAXO"
-    BANCA_GENERALI = "BG"
+    BG_SAXO = "bg_saxo"
+    BANCA_GENERALI = "banca_generali"
     CHE_BANCA = "che_banca"
 
 
@@ -73,6 +73,7 @@ async def get_owner(user_id: int, owner_id: int):
 
 
 @router.post("/", response_model=Account)
+@database.transaction()
 async def create_account(
     new_account: NewAccount, user: User = Depends(get_current_user)
 ):

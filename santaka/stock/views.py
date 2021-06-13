@@ -3,7 +3,13 @@ from datetime import datetime
 from fastapi import status, HTTPException, Depends, APIRouter
 from sqlalchemy.sql import select
 
-from santaka.db import database, stocks, currency, stock_transactions, create_random_id
+from santaka.db import (
+    database,
+    stocks,
+    currency,
+    stock_transactions,
+    create_random_id,
+)
 from santaka.user import User, get_current_user
 from santaka.account import get_owner
 from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
@@ -33,6 +39,7 @@ router = APIRouter(prefix="/stock", tags=["stock"])
 
 
 @router.put("/", response_model=Stock)
+@database.transaction()
 async def create_stock(new_stock: NewStock, user: User = Depends(get_current_user)):
     # query the database to check if stock already exists
     query = (
@@ -104,6 +111,7 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
     "/transaction/{owner_id}",
     response_model=StockTransaction,
 )
+@database.transaction()
 async def create_stock_transaction(
     owner_id: int,
     new_stock_transaction: NewStockTransaction,
@@ -295,6 +303,7 @@ async def get_traded_stocks(
 
 
 @router.delete("/transaction")
+@database.transaction()
 async def delete_stock_transaction(
     transaction: StockTransactionToDelete, user: User = Depends(get_current_user)
 ):
@@ -324,6 +333,7 @@ async def delete_stock_transaction(
 
 
 @router.patch("/transaction")
+@database.transaction()
 async def update_stock_transaction(
     transaction: StockTransactionToUpdate, user: User = Depends(get_current_user)
 ):

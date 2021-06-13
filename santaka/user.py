@@ -37,6 +37,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
+@database.transaction()
 async def create_user(username: str, password: str, base_currency: str):
     hashed_password = pwd_context.hash(password)
     query = users.insert().values(

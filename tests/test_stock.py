@@ -1,6 +1,9 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import List
+
 from pytest import raises, mark, approx
+from fastapi import HTTPException
 
 from santaka.stock.utils import (
     YahooMarket,
@@ -10,7 +13,6 @@ from santaka.stock.utils import (
 )
 from santaka.stock.models import NewStockTransaction, TransactionType
 from santaka.account import Bank
-from fastapi import HTTPException
 
 
 class FakeRecord:
@@ -269,3 +271,12 @@ def test_calculate_sell_tax(
 ):
     tax = calculate_sell_tax(market, fiscal_price, last_price, quantity)
     assert approx(tax, Decimal("0.001")) == expected
+
+
+@mark.parametrize(
+    ["dt", "expected_markets"],
+    [[datetime(2021, 6, 11, 9, 0, 0, 0), ["LSE", "EXTRA", "Milan"]]],
+)
+def test_get_active_markets(dt: datetime, expected_markets: List[str]):
+    # TODO implement this test
+    pass
