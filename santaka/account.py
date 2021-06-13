@@ -1,4 +1,5 @@
 from typing import List
+from enum import Enum
 
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.sql import select
@@ -21,9 +22,16 @@ class Owner(BaseModel):
     owner_id: int
 
 
+class Bank(str, Enum):
+    FINECOBANK = "fineco"
+    BG_SAXO = "BG_SAXO"
+    BANCA_GENERALI = "BG"
+    CHE_BANCA = "che_banca"
+
+
 class NewAccount(BaseModel):
     owners: conlist(str, min_items=1)  # fab: checks that exists at least one owner
-    bank: str
+    bank: Bank
     account_number: str
 
 

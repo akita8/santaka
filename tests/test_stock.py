@@ -1,9 +1,15 @@
 from datetime import datetime
 from decimal import Decimal
-from pytest import raises, mark
+from pytest import raises, mark, approx
 
-from santaka.stock.utils import calculate_commission, validate_stock_transaction
+from santaka.stock.utils import (
+    YahooMarket,
+    calculate_commission,
+    calculate_sell_tax,
+    validate_stock_transaction,
+)
 from santaka.stock.models import NewStockTransaction, TransactionType
+from santaka.account import Bank
 from fastapi import HTTPException
 
 
@@ -45,12 +51,166 @@ def test_total_quantity_greater_than_sell():
     ["bank", "market", "price", "quantity", "expected"],
     [
         [
-            "fineco",
-            "milan",
-            Decimal("20.50"),
+            Bank.FINECOBANK.value,
+            YahooMarket.ITALY.value,
+            Decimal("200"),
             10,
+            Decimal("3.8"),
+        ],
+        [
+            Bank.FINECOBANK.value,
+            YahooMarket.ITALY.value,
+            Decimal("2150"),
+            10,
+            Decimal("19"),
+        ],
+        [
+            Bank.FINECOBANK.value,
+            YahooMarket.ITALY.value,
+            Decimal("23"),
+            10,
+            Decimal("2.95"),
+        ],
+        [
+            Bank.FINECOBANK.value,
+            YahooMarket.EU.value,
+            Decimal("99.98"),
+            3,
+            Decimal("2.95"),
+        ],
+        [
+            Bank.FINECOBANK.value,
+            YahooMarket.UK.value,
+            Decimal("16.935"),
+            60,
+            Decimal("20.0305"),
+        ],
+        [
+            Bank.FINECOBANK.value,
+            YahooMarket.USA.value,
+            Decimal("216.5"),
+            60,
+            Decimal("12.95"),
+        ],
+        [
+            Bank.BG_SAXO.value,
+            YahooMarket.ITALY.value,
+            Decimal("44"),
+            10,
+            Decimal("2.5"),
+        ],
+        [
+            Bank.BG_SAXO.value,
+            YahooMarket.ITALY.value,
+            Decimal("100"),
+            50,
+            Decimal("8.5"),
+        ],
+        [
+            Bank.BG_SAXO.value,
+            YahooMarket.ITALY.value,
+            Decimal("440"),
+            100,
+            Decimal("17.5"),
+        ],
+        [
+            Bank.BG_SAXO.value,
+            YahooMarket.EU.value,
+            Decimal("44"),
+            100,
+            Decimal("11"),
+        ],
+        [
+            Bank.BG_SAXO.value,
+            YahooMarket.UK.value,
+            Decimal("16.935"),
+            60,
+            Decimal("16.0805"),
+        ],
+        [
+            Bank.BG_SAXO.value,
+            YahooMarket.USA.value,
+            Decimal("44"),
+            100,
+            Decimal("11"),
+        ],
+        [
+            Bank.BG_SAXO.value,
+            YahooMarket.CANADA.value,
+            Decimal("124"),
+            30,
+            Decimal("29.6"),
+        ],
+        [
+            Bank.BANCA_GENERALI.value,
+            YahooMarket.ITALY.value,
+            Decimal("230"),
+            10,
+            Decimal("8"),
+        ],
+        [
+            Bank.BANCA_GENERALI.value,
+            YahooMarket.ITALY.value,
+            Decimal("630"),
+            10,
+            Decimal("9.45"),
+        ],
+        [
+            Bank.BANCA_GENERALI.value,
+            YahooMarket.ITALY.value,
+            Decimal("1630"),
+            10,
+            Decimal("20"),
+        ],
+        [
+            Bank.CHE_BANCA.value,
+            YahooMarket.ITALY.value,
+            Decimal("11.1"),
+            50,
+            Decimal("6"),
+        ],
+        [
+            Bank.CHE_BANCA.value,
+            YahooMarket.ITALY.value,
+            Decimal("75"),
+            100,
+            Decimal("13.5"),
+        ],
+        [
+            Bank.CHE_BANCA.value,
+            YahooMarket.ITALY.value,
+            Decimal("150"),
+            100,
+            Decimal("25"),
+        ],
+        [
+            Bank.CHE_BANCA.value,
+            YahooMarket.EU.value,
+            Decimal("11.1"),
+            60,
+            Decimal("12"),
+        ],
+        [
+            Bank.CHE_BANCA.value,
+            YahooMarket.EU.value,
+            Decimal("75"),
+            100,
+            Decimal("13.5"),
+        ],
+        [
+            Bank.CHE_BANCA.value,
+            YahooMarket.EU.value,
+            Decimal("200"),
+            100,
+            Decimal("35"),
+        ],
+        [
+            None,
+            YahooMarket.ITALY.value,
             Decimal("0"),
-        ],  # this an example test case, add more
+            100,
+            Decimal("0"),
+        ],
     ],
 )
 def test_calculate_commission(
@@ -60,9 +220,52 @@ def test_calculate_commission(
     assert commission == expected
 
 
-def test_calculate_stamp_europe():
-    pass
-
-
-def test_calculate_stamp_uk():
-    pass
+@mark.parametrize(
+    ["market", "fiscal_price", "last_price", "quantity", "expected"],
+    [
+        [
+            YahooMarket.ITALY.value,
+            Decimal("13.4387"),
+            Decimal("10.582"),
+            75,
+            Decimal("0"),
+        ],
+        [
+            YahooMarket.ITALY.value,
+            Decimal("24.7"),
+            Decimal("39.57"),
+            20,
+            Decimal("77.324"),
+        ],
+        [
+            YahooMarket.USA.value,
+            Decimal("118.59034"),
+            Decimal("127.35"),
+            5,
+            Decimal("16.25"),
+        ],
+        [
+            YahooMarket.CANADA.value,
+            Decimal("42.19657"),
+            Decimal("57.42"),
+            140,
+            Decimal("790.7297"),
+        ],
+        [
+            YahooMarket.EU.value,
+            Decimal("100.9633"),
+            Decimal("233.3"),
+            3,
+            Decimal("179.6073"),
+        ],
+    ],
+)
+def test_calculate_sell_tax(
+    market: str,
+    fiscal_price: Decimal,
+    last_price: Decimal,
+    quantity: int,
+    expected: Decimal,
+):
+    tax = calculate_sell_tax(market, fiscal_price, last_price, quantity)
+    assert approx(tax, Decimal("0.001")) == expected

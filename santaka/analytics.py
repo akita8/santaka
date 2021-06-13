@@ -80,9 +80,11 @@ def calculate_fiscal_price(
 # class CouponYieldService(santaka_grpc.CouponYieldService):
 #     def CalculateCouponYield(self, request, *args):
 #         response = santaka_pb2.CouponYieldResponse()
-#         if request.price <= 0 or request.next_coupon_rate <= 0 or request.invested <= 0:
-#             response.error.message = "failed validation: price, invested and next coupon rate must be greater than 0"
-#             return response
+#         if request.price <= 0 or request.next_coupon_rate <= 0
+#           or request.invested <= 0:
+#           response.error.message = "failed validation: price, invested and next
+#           coupon rate must be greater than 0"
+#           return response
 #         net_coupon = request.next_coupon_rate - request.next_coupon_tax
 #         maturity = datetime.fromtimestamp(request.maturity_date).date()
 #         current = datetime.fromtimestamp(request.current_date).date()

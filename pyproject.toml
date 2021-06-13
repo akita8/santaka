@@ -25,6 +25,7 @@ flake8 = "^3.9.2"
 ipython = "^7.23.1"
 pytest = "^6.2.4"
 black = "^21.5b1"
+pytest-cov = "^2.12.1"
 
 [tool.poetry.scripts]
 create_user = 'santaka.cli:create_user'
