@@ -3,7 +3,6 @@ from typing import List
 from enum import Enum
 from os import environ
 from logging import getLogger
-from asyncio import sleep
 from datetime import datetime, timedelta
 
 from aiohttp import ClientSession
@@ -280,7 +279,7 @@ async def update_currency():
         )
         .order_by(asc(currency.c.last_update))
     )
-    oldest_currency = database.fetch_one(query)
+    oldest_currency = await database.fetch_one(query)
     if oldest_currency:
         logger.info("trying to update %d currency", oldest_currency.currency_id)
         quotes = await get_yahoo_quote([oldest_currency.symbol])
@@ -297,16 +296,3 @@ async def update_currency():
             .where(currency.c.currency_id == oldest_currency.currency_id)
         )
         await database.execute(query)
-
-
-async def update_yahoo_quotes(update_func):
-    while True:
-        try:
-            await update_func()
-        except Exception as e:
-            logger.error(
-                "failed to update quote: %s, retrying in %d seconds",
-                e,
-                YAHOO_UPDATE_COOLDOWN,
-            )
-        await sleep(YAHOO_UPDATE_COOLDOWN)
