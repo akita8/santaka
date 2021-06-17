@@ -16,6 +16,7 @@ from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 from santaka.stock.models import (
     NewStock,
     Stock,
+    StockToDelete,
     TransactionType,
     Transaction,
     NewStockTransaction,
@@ -105,6 +106,25 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
     stock["stock_id"] = stock_id
 
     return stock
+
+
+@router.delete("/")
+@database.transaction()
+async def delete_stock(
+    stock_to_delete: StockToDelete,
+    _: User = Depends(get_current_user),
+):
+    query = stock_transactions.select().where(
+        stock_transactions.c.stock_id == stock_to_delete.stock_id
+    )
+    record = await database.fetch_one(query)
+    if record:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock_id {stock_to_delete.stock_id} is actually in use",
+        )
+    query = stocks.delete().where(stocks.c.stock_id == stock_to_delete.stock_id)
+    await database.execute(query)
 
 
 @router.put(

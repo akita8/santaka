@@ -71,3 +71,7 @@ class StockTransactionToUpdate(BaseModel):
     commission: Optional[Decimal] = None
     date: Optional[datetime] = None
     transaction_type: Optional[TransactionType] = None
+
+
+class StockToDelete(BaseModel):
+    stock_id: int
