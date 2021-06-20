@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
@@ -7,7 +8,6 @@ from pydantic import BaseModel, Field
 
 
 class NewStock(BaseModel):
-    isin: str
     symbol: str
 
 
@@ -75,3 +75,13 @@ class StockTransactionToUpdate(BaseModel):
 
 class StockToDelete(BaseModel):
     stock_id: int
+
+
+class NewStockAlert(BaseModel):
+    stock_id: int
+    check_price: bool = False
+    dividend_date: Optional[datetime] = None
+
+
+class StockAlert(NewStockAlert):
+    stock_alert_id: int

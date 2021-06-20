@@ -15,7 +15,9 @@ from santaka.account import get_owner
 from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 from santaka.stock.models import (
     NewStock,
+    NewStockAlert,
     Stock,
+    StockAlert,
     StockToDelete,
     TransactionType,
     Transaction,
@@ -43,13 +45,7 @@ router = APIRouter(prefix="/stock", tags=["stock"])
 @database.transaction()
 async def create_stock(new_stock: NewStock, user: User = Depends(get_current_user)):
     # query the database to check if stock already exists
-    query = (
-        stocks.select()
-        .where(
-            stocks.c.isin == new_stock.isin
-        )  # TODO maybe make isin symbol composite primary key
-        .where(stocks.c.symbol == new_stock.symbol)
-    )
+    query = stocks.select().where(stocks.c.symbol == new_stock.symbol)
     stock_record = await database.fetch_one(query)
 
     if stock_record is None:
@@ -90,7 +86,6 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
         query = stocks.insert().values(
             stock_id=create_random_id(),
             currency_id=currency_id,
-            isin=new_stock.isin,
             market=stock_info[YAHOO_FIELD_MARKET],
             symbol=stock_symbol,
             last_price=stock_info[YAHOO_FIELD_PRICE],
@@ -231,7 +226,6 @@ async def get_traded_stocks(
                 stocks.c.stock_id,
                 currency.c.iso_currency,
                 currency.c.last_rate,
-                stocks.c.isin,
                 stocks.c.symbol,
                 stocks.c.last_price,
                 stocks.c.market,
@@ -267,19 +261,19 @@ async def get_traded_stocks(
             fiscal_price = calculate_fiscal_price(current_transactions)
             commission = calculate_commission(
                 owner_data[1],
-                previous_record[6],
                 previous_record[5],
+                previous_record[4],
                 current_quantity,
             )
             sell_tax = calculate_sell_tax(
-                previous_record[6],
-                fiscal_price,
                 previous_record[5],
+                fiscal_price,
+                previous_record[4],
                 current_quantity,  # total qty of all transactions of one stock_id
             )
             profit_and_loss = calculate_profit_and_loss(
                 fiscal_price,
-                previous_record[5],
+                previous_record[4],
                 current_buy_tax,
                 sell_tax,
                 commission,
@@ -296,10 +290,9 @@ async def get_traded_stocks(
                     "stock_id": previous_record[0],
                     "currency": previous_record[1],
                     "last_rate": previous_record[2],
-                    "isin": previous_record[3],
-                    "symbol": previous_record[4],
-                    "last_price": previous_record[5],
-                    "market": previous_record[6],
+                    "symbol": previous_record[3],
+                    "last_price": previous_record[4],
+                    "market": previous_record[5],
                     "fiscal_price": fiscal_price,
                     "profit_and_loss": profit_and_loss,
                 }
@@ -307,18 +300,18 @@ async def get_traded_stocks(
         if i != len(records) - 1:
             current_transactions.append(
                 Transaction(
-                    transaction_type=record[7],
-                    quantity=record[8],
-                    price=record[9],
-                    commission=record[10],
-                    date=record[11],
+                    transaction_type=record[6],
+                    quantity=record[7],
+                    price=record[8],
+                    commission=record[9],
+                    date=record[10],
                 )
             )
             if record[7] == TransactionType.buy.value:
-                current_buy_tax += record[12]  # buy type will add tax
-                current_quantity += record[8]  # buy type will add qty
+                current_buy_tax += record[11]  # buy type will add tax
+                current_quantity += record[7]  # buy type will add qty
             else:
-                current_quantity -= record[8]  # sell type will reduce qty
+                current_quantity -= record[7]  # sell type will reduce qty
     return traded_stocks
 
 
@@ -383,3 +376,10 @@ async def update_stock_transaction(
         .values(**values)
     )
     await database.execute(query)
+
+
+@router.put("/alert/{owner_id}", response_model=StockAlert)
+@database.transaction()
+async def create_stock_alert(owner_id: int, new_stock_alert: NewStockAlert):
+    pass
+    # TODO implement this function and get, delete and patch views

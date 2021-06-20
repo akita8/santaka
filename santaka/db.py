@@ -58,7 +58,6 @@ stocks = sqlalchemy.Table(
     "stocks",
     metadata,
     sqlalchemy.Column("stock_id", sqlalchemy.Integer, primary_key=True),
-    sqlalchemy.Column("isin", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("market", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("symbol", sqlalchemy.String, nullable=False, unique=True),
     sqlalchemy.Column("last_price", sqlalchemy.DECIMAL, nullable=False),
@@ -94,6 +93,25 @@ stock_transactions = sqlalchemy.Table(
     sqlalchemy.Column("date", sqlalchemy.DateTime, nullable=False),
     sqlalchemy.Column("transaction_type", sqlalchemy.String, nullable=False),
 )
+stock_alerts = sqlalchemy.Table(
+    "stock_alerts",
+    metadata,
+    sqlalchemy.Column("stock_alert_id", sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column(
+        "stock_id",
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey("stocks.stock_id"),
+        nullable=False,
+    ),
+    sqlalchemy.Column(
+        "owner_id",
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey("owners.owner_id"),
+        nullable=False,
+    ),
+    sqlalchemy.Column("dividend_date", sqlalchemy.DateTime, nullable=True),
+    sqlalchemy.Column("check_price", sqlalchemy.Boolean, nullable=True)
+) 
 
 bonds = sqlalchemy.Table(
     "bonds",

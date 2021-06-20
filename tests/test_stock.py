@@ -9,6 +9,7 @@ from santaka.stock.utils import (
     YahooMarket,
     calculate_commission,
     calculate_sell_tax,
+    get_active_markets,
     validate_stock_transaction,
 )
 from santaka.stock.models import NewStockTransaction, TransactionType
@@ -276,7 +277,7 @@ def test_calculate_sell_tax(
 @mark.parametrize(
     ["dt", "expected_markets"],
     [[datetime(2021, 6, 11, 9, 0, 0, 0), ["LSE", "EXTRA", "Milan"]]],
-)
+)  # TODO add some test cases
 def test_get_active_markets(dt: datetime, expected_markets: List[str]):
-    # TODO implement this test
-    pass
+    active_market = get_active_markets(dt)
+    assert active_market == expected_markets

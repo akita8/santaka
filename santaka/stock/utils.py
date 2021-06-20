@@ -16,7 +16,7 @@ from santaka.stock.models import (
     NewStockTransaction,
 )
 from santaka.account import Bank
-from santaka.db import database, stocks, currency
+from santaka.db import database, stocks, currency, stock_transactions
 
 logger = getLogger(__name__)
 
@@ -221,13 +221,18 @@ async def update_stocks():
                 ]
             )
             .select_from(
-                stocks.join(currency, stocks.c.currency_id == currency.c.currency_id)
+                stocks.join(
+                    currency, stocks.c.currency_id == currency.c.currency_id
+                ).join(
+                    stock_transactions, stocks.stock_id == stock_transactions.stock_id
+                )
             )
             .where(
                 stocks.c.market.in_(active_markets),
             )
             .where(stocks.c.last_update < one_hour_before)
             .order_by(asc(stocks.c.last_update))
+            .distinct()
         )
         oldest_stock = await database.fetch_one(query)
         if oldest_stock:
