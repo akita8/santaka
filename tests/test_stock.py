@@ -90,7 +90,7 @@ def test_total_quantity_greater_than_sell():
         ],
         [
             Bank.FINECOBANK.value,
-            YahooMarket.USA.value,
+            YahooMarket.USA_NYSE.value,
             Decimal("216.5"),
             60,
             Decimal("12.95"),
@@ -132,7 +132,7 @@ def test_total_quantity_greater_than_sell():
         ],
         [
             Bank.BG_SAXO.value,
-            YahooMarket.USA.value,
+            YahooMarket.USA_NASDAQ.value,
             Decimal("44"),
             100,
             Decimal("11"),
@@ -241,7 +241,7 @@ def test_calculate_commission(
             Decimal("77.324"),
         ],
         [
-            YahooMarket.USA.value,
+            YahooMarket.USA_NYSE.value,
             Decimal("118.59034"),
             Decimal("127.35"),
             5,
@@ -276,7 +276,10 @@ def test_calculate_sell_tax(
 
 @mark.parametrize(
     ["dt", "expected_markets"],
-    [[datetime(2021, 6, 11, 9, 0, 0, 0), ["LSE", "EXTRA", "Milan"]]],
+    [
+        [datetime(2021, 6, 11, 9, 0, 0, 0), ["LSE", "EXTRA", "Milan"]],
+        [datetime(2021, 6, 16, 19, 0, 0, 0), ["NasdaqGS", "NYSE", "Toronto"]],
+    ],
 )  # TODO add some test cases
 def test_get_active_markets(dt: datetime, expected_markets: List[str]):
     active_market = get_active_markets(dt)

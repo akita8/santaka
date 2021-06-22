@@ -32,19 +32,22 @@ class YahooMarket(str, Enum):
     ITALY = "Milan"
     UK = "LSE"
     EU = "EXTRA"
-    USA = "NasdaqGS"
+    USA_NASDAQ = "NasdaqGS"
+    USA_NYSE = "NYSE"
     CANADA = "Toronto"
 
 
 ITALIAN_TAX = Decimal("0.26")
 DOUBLE_TAX_MARKETS = {
     YahooMarket.EU.value: Decimal("0.26"),
-    YahooMarket.USA.value: Decimal("0.15"),
+    YahooMarket.USA_NASDAQ.value: Decimal("0.15"),
+    YahooMarket.USA_NYSE.value: Decimal("0.15"),
     YahooMarket.CANADA.value: Decimal("0.15"),
 }
 
 MARKET_TIMEZONES = {
-    YahooMarket.USA.value: timezone("America/New_York"),
+    YahooMarket.USA_NASDAQ.value: timezone("America/New_York"),
+    YahooMarket.USA_NYSE.value: timezone("America/New_York"),
     YahooMarket.UK.value: timezone("Europe/London"),
     YahooMarket.EU.value: timezone("Europe/Berlin"),
     YahooMarket.ITALY.value: timezone("Europe/Rome"),
@@ -128,7 +131,10 @@ def calculate_commission(
             if fineco_commission > Decimal("19"):
                 return Decimal("19")
             return fineco_commission
-        if market == YahooMarket.USA.value:
+        if (
+            market == YahooMarket.USA_NYSE.value
+            or market == YahooMarket.USA_NASDAQ.value
+        ):
             return Decimal("12.95")
         if market == YahooMarket.UK.value:
             return Decimal("14.95") + invested * Decimal("0.005")
@@ -141,7 +147,10 @@ def calculate_commission(
             if bg_saxo_commission >= Decimal("17.5"):
                 return Decimal("17.5")
             return bg_saxo_commission
-        if market == YahooMarket.USA.value:
+        if (
+            market == YahooMarket.USA_NYSE.value
+            or market == YahooMarket.USA_NASDAQ.value
+        ):
             return Decimal("11")
         if market == YahooMarket.EU.value:
             return Decimal("11")
@@ -176,7 +185,7 @@ def calculate_commission(
 def calculate_sell_tax(
     market: str, fiscal_price: Decimal, last_price: Decimal, quantity: int
 ) -> Decimal:
-    amount = last_price * quantity - fiscal_price * quantity  # forse le commissioni?
+    amount = last_price * quantity - fiscal_price * quantity
     if amount > 0:
         if market == YahooMarket.ITALY.value:
             return amount * ITALIAN_TAX

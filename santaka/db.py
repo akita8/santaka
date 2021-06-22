@@ -110,8 +110,8 @@ stock_alerts = sqlalchemy.Table(
         nullable=False,
     ),
     sqlalchemy.Column("dividend_date", sqlalchemy.DateTime, nullable=True),
-    sqlalchemy.Column("check_price", sqlalchemy.Boolean, nullable=True)
-) 
+    sqlalchemy.Column("check_price", sqlalchemy.Boolean, nullable=True),
+)
 
 bonds = sqlalchemy.Table(
     "bonds",

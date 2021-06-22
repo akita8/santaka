@@ -199,7 +199,6 @@ def test_calculate_stock_fiscal_price(
         # (can also be passed as a string of comma separated names)
         "fiscal_price",
         "last_price",
-        "buy_tax",
         "sell_tax",
         "sell_commission",
         "quantity",
@@ -210,17 +209,23 @@ def test_calculate_stock_fiscal_price(
             D("24.7"),
             D("38.59"),
             D("0"),
-            D("0"),
             D("8"),
             20,
             D("269.8"),
         ],  # first test case, put adeguate parameters in this list these are
+        [
+            D("174.1784"),
+            D("394.225"),
+            D("408.19"),
+            D("11"),
+            5,
+            D("681.046"),
+        ],
     ],
 )
 def test_calculate_profit_and_loss(
     fiscal_price,
     last_price,
-    buy_tax,
     sell_tax,
     sell_commission,
     quantity,
@@ -233,7 +238,6 @@ def test_calculate_profit_and_loss(
     result = calculate_profit_and_loss(
         fiscal_price,
         last_price,
-        buy_tax,
         sell_tax,
         sell_commission,
         quantity,

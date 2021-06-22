@@ -118,7 +118,7 @@ async def delete_stock(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Stock_id {stock_to_delete.stock_id} is actually in use",
         )
-    query = stocks.delete().where(stocks.c.stock_id == stock_to_delete.stock_id)
+        query = stocks.delete().where(stocks.c.stock_id == stock_to_delete.stock_id)
     await database.execute(query)
 
 
@@ -243,7 +243,10 @@ async def get_traded_stocks(
             ).join(currency, currency.c.currency_id == stocks.c.currency_id)
         )
         .where(stock_transactions.c.owner_id == owner_id)
-        .order_by(stocks.c.stock_id)
+        .order_by(
+            stocks.c.stock_id,
+            stock_transactions.c.date,
+        )
     )
     records = await database.fetch_all(query)
     traded_stocks = {"stocks": []}
@@ -252,7 +255,6 @@ async def get_traded_stocks(
         previous_stock_id = records[0][0]
         records.append([None])  # this triggers the addition of the last stock
     current_transactions = []
-    current_buy_tax = 0
     current_quantity = 0
     for i, record in enumerate(records):
         if previous_stock_id != record[0]:
@@ -274,14 +276,12 @@ async def get_traded_stocks(
             profit_and_loss = calculate_profit_and_loss(
                 fiscal_price,
                 previous_record[4],
-                current_buy_tax,
                 sell_tax,
                 commission,
                 current_quantity,
             )
             # here we are resetting the tax and qty to zero
             # and transactions to empty list for the next group of transactions
-            current_buy_tax = 0
             current_quantity = 0
             current_transactions = []
 
@@ -307,8 +307,7 @@ async def get_traded_stocks(
                     date=record[10],
                 )
             )
-            if record[7] == TransactionType.buy.value:
-                current_buy_tax += record[11]  # buy type will add tax
+            if record[6] == TransactionType.buy.value:
                 current_quantity += record[7]  # buy type will add qty
             else:
                 current_quantity -= record[7]  # sell type will reduce qty

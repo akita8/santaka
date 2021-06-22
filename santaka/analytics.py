@@ -9,12 +9,11 @@ from santaka.stock.models import Transaction, TransactionType, SplitEvent
 def calculate_profit_and_loss(
     fiscal_price: Decimal,
     last_price: Decimal,
-    buy_tax: Decimal,
     sell_tax: Decimal,
     sell_commission: Decimal,
     quantity: int,
 ) -> Decimal:
-    bought = quantity * fiscal_price + buy_tax
+    bought = quantity * fiscal_price
     sold = quantity * last_price - sell_commission - sell_tax
     return sold - bought
 
