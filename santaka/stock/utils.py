@@ -78,6 +78,8 @@ async def get_yahoo_quote(symbols: List[str]):
             response = await resp.json()
     quotes = {}
     for quote in response["quoteResponse"]["result"]:
+        if quote[YAHOO_FIELD_MARKET] == YahooMarket.UK.value:
+            quote[YAHOO_FIELD_PRICE] = quote[YAHOO_FIELD_PRICE] / 100
         quotes[quote["symbol"]] = quote
     return quotes
 
@@ -138,7 +140,6 @@ def calculate_commission(
             return Decimal("12.95")
         if market == YahooMarket.UK.value:
             return Decimal("14.95") + invested * Decimal("0.005")
-        # TODO add "buy condition" where the commission is fixed 14.95£
     if bank == Bank.BG_SAXO.value:
         bg_saxo_commission = invested * Decimal("0.0017")
         if market == YahooMarket.ITALY.value:
@@ -156,6 +157,7 @@ def calculate_commission(
             return Decimal("11")
         if market == YahooMarket.UK.value:
             return Decimal("11") + invested * Decimal("0.005")
+            # TODO add buy tax on UK commission transactions es. BP.L 14,95+5,02
         if market == YahooMarket.CANADA.value:
             return Decimal("11") + invested * Decimal("0.005")
     if bank == Bank.BANCA_GENERALI.value and market == YahooMarket.ITALY.value:
@@ -179,6 +181,11 @@ def calculate_commission(
             if che_banca_commission >= Decimal("35"):
                 return Decimal("35")
             return che_banca_commission
+        if (
+            market == YahooMarket.USA_NYSE.value
+            or market == YahooMarket.USA_NASDAQ.value
+        ):
+            return Decimal("12")
     return Decimal("0")
 
 
@@ -257,7 +264,7 @@ async def update_stocks():
             quotes = await get_yahoo_quote([stock_symbol, currency_symbol])
             if len(quotes) != 2:
                 raise YahooError(
-                    f"yahoo returned less quotes than requsted: {quotes.keys()}"
+                    f"yahoo returned less quotes than requested: {quotes.keys()}"
                 )
             query = (
                 stocks.update()
@@ -310,3 +317,19 @@ async def update_currency():
             .where(currency.c.currency_id == oldest_currency.currency_id)
         )
         await database.execute(query)
+
+
+def check_dividend_date(dividend_date: datetime) -> bool:
+    pass
+
+
+def check_lower_limit_price(last_price: Decimal, lower_limit: Decimal) -> bool:
+    pass
+
+
+def check_upper_limit_price(last_price: Decimal, upper_limit: Decimal) -> bool:
+    pass
+
+
+# TODO implement this functions and related tests creting a new file test_utils.py
+# in tests\stock

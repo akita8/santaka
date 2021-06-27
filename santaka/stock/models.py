@@ -70,7 +70,6 @@ class StockTransactionToUpdate(BaseModel):
     tax: Optional[Decimal] = None
     commission: Optional[Decimal] = None
     date: Optional[datetime] = None
-    transaction_type: Optional[TransactionType] = None
 
 
 class StockToDelete(BaseModel):
@@ -79,9 +78,32 @@ class StockToDelete(BaseModel):
 
 class NewStockAlert(BaseModel):
     stock_id: int
-    check_price: bool = False
+    lower_limit_price: Optional[Decimal] = None
+    upper_limit_price: Optional[Decimal] = None
     dividend_date: Optional[datetime] = None
 
 
 class StockAlert(NewStockAlert):
     stock_alert_id: int
+
+
+class StockAlerts(BaseModel):
+    alerts: List[StockAlert]
+
+
+class StockAlertToDelete(BaseModel):
+    stock_alert_id: int
+
+
+class AlertFields(str, Enum):
+    LOWER_LIMIT_PRICE = "lower_limit_price"
+    UPPER_LIMIT_PRICE = "upper_limit_price"
+    DIVIDEND_DATE = "dividend_date"
+
+
+class StockAlertToUpdate(BaseModel):
+    stock_alert_id: int
+    lower_limit_price: Optional[Decimal] = None
+    upper_limit_price: Optional[Decimal] = None
+    dividend_date: Optional[datetime] = None
+    disabled_fields: Optional[List[AlertFields]] = None

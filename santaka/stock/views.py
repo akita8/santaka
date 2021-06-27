@@ -1,4 +1,6 @@
 from datetime import datetime
+from decimal import Decimal
+from typing import List, Tuple
 
 from fastapi import status, HTTPException, Depends, APIRouter
 from sqlalchemy.sql import select
@@ -9,15 +11,20 @@ from santaka.db import (
     currency,
     stock_transactions,
     create_random_id,
+    stock_alerts,
 )
 from santaka.user import User, get_current_user
 from santaka.account import get_owner
 from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 from santaka.stock.models import (
+    DetailedStock,
     NewStock,
     NewStockAlert,
     Stock,
     StockAlert,
+    StockAlerts,
+    StockAlertToDelete,
+    StockAlertToUpdate,
     StockToDelete,
     TransactionType,
     Transaction,
@@ -39,6 +46,21 @@ from santaka.stock.utils import (
 )
 
 router = APIRouter(prefix="/stock", tags=["stock"])
+
+TransactionRecords = Tuple[
+    int,  # stock_id
+    str,  # iso_currency
+    Decimal,  # last_rate
+    str,  # symbol
+    Decimal,  # last_price
+    str,  # market
+    str,  # transaction_type
+    int,  # quantity
+    Decimal,  # price
+    Decimal,  # commission
+    datetime,  # date
+    Decimal,  # tax
+]
 
 
 @router.put("/", response_model=Stock)
@@ -136,7 +158,7 @@ async def create_stock_transaction(
     query = stocks.select().where(stocks.c.stock_id == new_stock_transaction.stock_id)
     record = await database.fetch_one(
         query
-    )  # Fab: fetch_one takes only the first reccord
+    )  # Fab: fetch_one takes only the first record
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -209,6 +231,76 @@ async def get_stock_transaction_history(
     return history
 
 
+def prepare_traded_stocks(
+    transaction_records: List[TransactionRecords], bank: str
+) -> List[DetailedStock]:
+    traded_stocks = []
+    previous_stock_id = None
+    if transaction_records:
+        previous_stock_id = transaction_records[0][0]
+        transaction_records.append(
+            [None]
+        )  # this triggers the addition of the last stock
+    current_transactions = []
+    current_quantity = 0
+    for i, record in enumerate(transaction_records):
+        if previous_stock_id != record[0]:
+            previous_stock_id = record[0]
+            previous_record = transaction_records[i - 1]
+            fiscal_price = calculate_fiscal_price(current_transactions)
+            commission = calculate_commission(
+                bank,
+                previous_record[5],
+                previous_record[4],
+                current_quantity,
+            )
+            sell_tax = calculate_sell_tax(
+                previous_record[5],
+                fiscal_price,
+                previous_record[4],
+                current_quantity,  # total qty of all transactions of one stock_id
+            )
+            profit_and_loss = calculate_profit_and_loss(
+                fiscal_price,
+                previous_record[4],
+                sell_tax,
+                commission,
+                current_quantity,
+            )
+            # here we are resetting the tax and qty to zero
+            # and transactions to empty list for the next group of transactions
+            current_quantity = 0
+            current_transactions = []
+
+            traded_stocks.append(
+                {
+                    "stock_id": previous_record[0],
+                    "currency": previous_record[1],
+                    "last_rate": previous_record[2],
+                    "symbol": previous_record[3],
+                    "last_price": previous_record[4],
+                    "market": previous_record[5],
+                    "fiscal_price": fiscal_price,
+                    "profit_and_loss": profit_and_loss,
+                }
+            )
+        if i != len(transaction_records) - 1:
+            current_transactions.append(
+                Transaction(
+                    transaction_type=record[6],
+                    quantity=record[7],
+                    price=record[8],
+                    commission=record[9],
+                    date=record[10],
+                )
+            )
+            if record[6] == TransactionType.buy.value:
+                current_quantity += record[7]  # buy type will add qty
+            else:
+                current_quantity -= record[7]  # sell type will reduce qty
+    return traded_stocks
+
+
 @router.get(
     "/traded/{owner_id}",
     response_model=TradedStocks,
@@ -249,69 +341,7 @@ async def get_traded_stocks(
         )
     )
     records = await database.fetch_all(query)
-    traded_stocks = {"stocks": []}
-    previous_stock_id = None
-    if records:
-        previous_stock_id = records[0][0]
-        records.append([None])  # this triggers the addition of the last stock
-    current_transactions = []
-    current_quantity = 0
-    for i, record in enumerate(records):
-        if previous_stock_id != record[0]:
-            previous_stock_id = record[0]
-            previous_record = records[i - 1]
-            fiscal_price = calculate_fiscal_price(current_transactions)
-            commission = calculate_commission(
-                owner_data[1],
-                previous_record[5],
-                previous_record[4],
-                current_quantity,
-            )
-            sell_tax = calculate_sell_tax(
-                previous_record[5],
-                fiscal_price,
-                previous_record[4],
-                current_quantity,  # total qty of all transactions of one stock_id
-            )
-            profit_and_loss = calculate_profit_and_loss(
-                fiscal_price,
-                previous_record[4],
-                sell_tax,
-                commission,
-                current_quantity,
-            )
-            # here we are resetting the tax and qty to zero
-            # and transactions to empty list for the next group of transactions
-            current_quantity = 0
-            current_transactions = []
-
-            traded_stocks["stocks"].append(
-                {
-                    "stock_id": previous_record[0],
-                    "currency": previous_record[1],
-                    "last_rate": previous_record[2],
-                    "symbol": previous_record[3],
-                    "last_price": previous_record[4],
-                    "market": previous_record[5],
-                    "fiscal_price": fiscal_price,
-                    "profit_and_loss": profit_and_loss,
-                }
-            )
-        if i != len(records) - 1:
-            current_transactions.append(
-                Transaction(
-                    transaction_type=record[6],
-                    quantity=record[7],
-                    price=record[8],
-                    commission=record[9],
-                    date=record[10],
-                )
-            )
-            if record[6] == TransactionType.buy.value:
-                current_quantity += record[7]  # buy type will add qty
-            else:
-                current_quantity -= record[7]  # sell type will reduce qty
-    return traded_stocks
+    return {"stocks": prepare_traded_stocks(records, owner_data[1])}
 
 
 @router.delete("/transaction")
@@ -377,8 +407,111 @@ async def update_stock_transaction(
     await database.execute(query)
 
 
-@router.put("/alert/{owner_id}", response_model=StockAlert)
+@router.put("/alert", response_model=StockAlert)
 @database.transaction()
-async def create_stock_alert(owner_id: int, new_stock_alert: NewStockAlert):
-    pass
-    # TODO implement this function and get, delete and patch views
+async def create_stock_alert(
+    new_stock_alert: NewStockAlert,
+    user: User = Depends(get_current_user),
+):
+    if (
+        new_stock_alert.lower_limit_price is None
+        and new_stock_alert.upper_limit_price is None
+        and new_stock_alert.dividend_date is None
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one field must be present",
+        )
+    query = stocks.select().where(stocks.c.stock_id == new_stock_alert.stock_id)
+    record = await database.fetch_one(query)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock {new_stock_alert.stock_id} doesn't exist",
+        )
+    query = stock_alerts.insert().values(
+        stock_alert_id=create_random_id(),
+        stock_id=new_stock_alert.stock_id,
+        user_id=user.user_id,
+        lower_limit_price=new_stock_alert.lower_limit_price,
+        upper_limit_price=new_stock_alert.upper_limit_price,
+        dividend_date=new_stock_alert.dividend_date,
+    )
+    stock_alert_id = await database.execute(query)
+    stock_alert = new_stock_alert.dict()
+    stock_alert["stock_alert_id"] = stock_alert_id
+    return stock_alert
+
+
+@router.get("/alert", response_model=StockAlerts)
+@database.transaction()
+async def get_stock_alert(
+    user: User = Depends(get_current_user),
+):
+    query = stock_alerts.select().where(stock_alerts.c.user_id == user.user_id)
+    records = await database.fetch_all(query)
+    alerts = {"alerts": []}
+    for alert in records:
+        alerts["alerts"].append(
+            {
+                "stock_id": alert.stock_id,
+                "lower_limit_price": alert.lower_limit_price,
+                "upper_limit_price": alert.upper_limit_price,
+                "dividend_date": alert.dividend_date,
+                "stock_alert_id": alert.stock_alert_id,
+            }
+        )
+    return alerts
+
+
+@router.delete("/alert")
+@database.transaction()
+async def delete_stock_alert(
+    alert: StockAlertToDelete, user: User = Depends(get_current_user)
+):
+    query = stock_alerts.select().where(
+        stock_alerts.c.stock_alert_id == alert.stock_alert_id
+    )
+    record = await database.fetch_one(query)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock alert {alert.stock_alert_id} doesn't exist",
+        )
+    query = stock_alerts.delete().where(
+        stock_alerts.c.stock_alert_id == alert.stock_alert_id
+    )
+    await database.execute(query)
+
+
+@router.patch("/alert")
+@database.transaction()
+async def update_stock_alert(
+    alert: StockAlertToUpdate, user: User = Depends(get_current_user)
+):
+    query = stock_alerts.select().where(
+        stock_alerts.c.stock_alert_id == alert.stock_alert_id
+    )
+    record = await database.fetch_one(query)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock alert {alert.stock_alert_id} doesn't exist",
+        )
+    alert_dict = alert.dict()
+    disabled_fields = alert_dict.pop("disabled_fields")
+    values = {}
+    for key in alert_dict:
+        if alert_dict[key] is not None and key != "stock_alert_id":
+            values[key] = alert_dict[key]
+    if disabled_fields:
+        for field in disabled_fields:
+            values[field] = None
+    if not values:
+        return
+    query = (
+        stock_alerts.update()
+        .where(stock_alerts.c.stock_alert_id == alert.stock_alert_id)
+        .values(**values)
+    )
+    await database.execute(query)

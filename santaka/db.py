@@ -1,9 +1,11 @@
 from random import randint
+from os import environ
 
 import sqlalchemy
 from databases import Database
 
-DATABASE_URL = "sqlite:///./santaka.db"
+DATABASE_URL = environ.get("DATABASE_URL", "sqlite:///./santaka.db")
+TEST_DATABASE_URL = "sqlite:///:memory:"
 
 metadata = sqlalchemy.MetaData()
 
@@ -104,13 +106,18 @@ stock_alerts = sqlalchemy.Table(
         nullable=False,
     ),
     sqlalchemy.Column(
-        "owner_id",
+        "user_id",
         sqlalchemy.Integer,
-        sqlalchemy.ForeignKey("owners.owner_id"),
+        sqlalchemy.ForeignKey("users.user_id"),
         nullable=False,
     ),
     sqlalchemy.Column("dividend_date", sqlalchemy.DateTime, nullable=True),
-    sqlalchemy.Column("check_price", sqlalchemy.Boolean, nullable=True),
+    sqlalchemy.Column("lower_limit_price", sqlalchemy.DECIMAL, nullable=True),
+    sqlalchemy.Column("upper_limit_price", sqlalchemy.DECIMAL, nullable=True),
+    # TODO add check fiscal price lower than and upper than last price
+    # add the two boolean columns, the fields in the models and modify the
+    # views accordingly, before testing you have to recreate the database or add
+    # the columns directly (dbbrowser alter table).
 )
 
 bonds = sqlalchemy.Table(
@@ -165,7 +172,11 @@ engine = sqlalchemy.create_engine(
     DATABASE_URL, connect_args={"check_same_thread": False}
 )
 metadata.create_all(engine)
-database = Database(DATABASE_URL)
+
+if "PYTEST_CURRENT_TEST" in environ:
+    database = Database(TEST_DATABASE_URL, force_rollback=True)
+else:
+    database = Database(DATABASE_URL)
 
 
 def create_random_id(length: int = 15):
