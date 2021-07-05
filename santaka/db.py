@@ -106,18 +106,18 @@ stock_alerts = sqlalchemy.Table(
         nullable=False,
     ),
     sqlalchemy.Column(
-        "user_id",
+        "owner_id",
         sqlalchemy.Integer,
-        sqlalchemy.ForeignKey("users.user_id"),
+        sqlalchemy.ForeignKey("owners.owner_id"),
         nullable=False,
     ),
     sqlalchemy.Column("dividend_date", sqlalchemy.DateTime, nullable=True),
     sqlalchemy.Column("lower_limit_price", sqlalchemy.DECIMAL, nullable=True),
     sqlalchemy.Column("upper_limit_price", sqlalchemy.DECIMAL, nullable=True),
-    # TODO add check fiscal price lower than and upper than last price
-    # add the two boolean columns, the fields in the models and modify the
-    # views accordingly, before testing you have to recreate the database or add
-    # the columns directly (dbbrowser alter table).
+    sqlalchemy.Column("fiscal_price_lower_than", sqlalchemy.BOOLEAN, nullable=True),
+    sqlalchemy.Column("fiscal_price_greater_than", sqlalchemy.BOOLEAN, nullable=True),
+    sqlalchemy.Column("profit_and_loss_lower_limit", sqlalchemy.DECIMAL, nullable=True),
+    sqlalchemy.Column("profit_and_loss_upper_limit", sqlalchemy.DECIMAL, nullable=True),
 )
 
 bonds = sqlalchemy.Table(

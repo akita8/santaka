@@ -48,6 +48,7 @@ class DetailedStock(Stock):
     last_rate: Decimal
     fiscal_price: Decimal
     profit_and_loss: Decimal
+    owner_id: int
 
 
 class TradedStocks(BaseModel):
@@ -76,15 +77,31 @@ class StockToDelete(BaseModel):
     stock_id: int
 
 
+class AlertFields(str, Enum):
+    LOWER_LIMIT_PRICE = "lower_limit_price"
+    UPPER_LIMIT_PRICE = "upper_limit_price"
+    DIVIDEND_DATE = "dividend_date"
+    FISCAL_PRICE_LOWER_THAN = "fiscal_price_lower_than"
+    FISCAL_PRICE_GREATER_THAN = "fiscal_price_greater_than"
+    PROFIT_AND_LOSS_LOWER_LIMIT = "profit_and_loss_lower_limit"
+    PROFIT_AND_LOSS_UPPER_LIMIT = "profit_and_loss_upper_limit"
+
+
 class NewStockAlert(BaseModel):
     stock_id: int
+    owner_id: int
     lower_limit_price: Optional[Decimal] = None
     upper_limit_price: Optional[Decimal] = None
     dividend_date: Optional[datetime] = None
+    fiscal_price_lower_than: Optional[bool] = None
+    fiscal_price_greater_than: Optional[bool] = None
+    profit_and_loss_lower_limit: Optional[Decimal] = None
+    profit_and_loss_upper_limit: Optional[Decimal] = None
 
 
 class StockAlert(NewStockAlert):
     stock_alert_id: int
+    triggered_fields: Optional[List[AlertFields]] = None
 
 
 class StockAlerts(BaseModel):
@@ -95,15 +112,13 @@ class StockAlertToDelete(BaseModel):
     stock_alert_id: int
 
 
-class AlertFields(str, Enum):
-    LOWER_LIMIT_PRICE = "lower_limit_price"
-    UPPER_LIMIT_PRICE = "upper_limit_price"
-    DIVIDEND_DATE = "dividend_date"
-
-
 class StockAlertToUpdate(BaseModel):
     stock_alert_id: int
     lower_limit_price: Optional[Decimal] = None
     upper_limit_price: Optional[Decimal] = None
     dividend_date: Optional[datetime] = None
+    fiscal_price_lower_than: Optional[bool] = None
+    fiscal_price_greater_than: Optional[bool] = None
+    profit_and_loss_lower_limit: Optional[Decimal] = None
+    profit_and_loss_upper_limit: Optional[Decimal] = None
     disabled_fields: Optional[List[AlertFields]] = None

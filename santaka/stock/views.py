@@ -1,9 +1,6 @@
 from datetime import datetime
-from decimal import Decimal
-from typing import List, Tuple
 
 from fastapi import status, HTTPException, Depends, APIRouter
-from sqlalchemy.sql import select
 
 from santaka.db import (
     database,
@@ -15,9 +12,7 @@ from santaka.db import (
 )
 from santaka.user import User, get_current_user
 from santaka.account import get_owner
-from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 from santaka.stock.models import (
-    DetailedStock,
     NewStock,
     NewStockAlert,
     Stock,
@@ -26,8 +21,6 @@ from santaka.stock.models import (
     StockAlertToDelete,
     StockAlertToUpdate,
     StockToDelete,
-    TransactionType,
-    Transaction,
     NewStockTransaction,
     StockTransaction,
     StockTransactionHistory,
@@ -36,31 +29,17 @@ from santaka.stock.models import (
     StockTransactionToUpdate,
 )
 from santaka.stock.utils import (
-    calculate_commission,
-    calculate_sell_tax,
     call_yahoo_from_view,
     validate_stock_transaction,
+    prepare_traded_stocks,
+    get_transaction_records,
+    check_stock_alerts,
     YAHOO_FIELD_CURRENCY,
     YAHOO_FIELD_MARKET,
     YAHOO_FIELD_PRICE,
 )
 
 router = APIRouter(prefix="/stock", tags=["stock"])
-
-TransactionRecords = Tuple[
-    int,  # stock_id
-    str,  # iso_currency
-    Decimal,  # last_rate
-    str,  # symbol
-    Decimal,  # last_price
-    str,  # market
-    str,  # transaction_type
-    int,  # quantity
-    Decimal,  # price
-    Decimal,  # commission
-    datetime,  # date
-    Decimal,  # tax
-]
 
 
 @router.put("/", response_model=Stock)
@@ -231,76 +210,6 @@ async def get_stock_transaction_history(
     return history
 
 
-def prepare_traded_stocks(
-    transaction_records: List[TransactionRecords], bank: str
-) -> List[DetailedStock]:
-    traded_stocks = []
-    previous_stock_id = None
-    if transaction_records:
-        previous_stock_id = transaction_records[0][0]
-        transaction_records.append(
-            [None]
-        )  # this triggers the addition of the last stock
-    current_transactions = []
-    current_quantity = 0
-    for i, record in enumerate(transaction_records):
-        if previous_stock_id != record[0]:
-            previous_stock_id = record[0]
-            previous_record = transaction_records[i - 1]
-            fiscal_price = calculate_fiscal_price(current_transactions)
-            commission = calculate_commission(
-                bank,
-                previous_record[5],
-                previous_record[4],
-                current_quantity,
-            )
-            sell_tax = calculate_sell_tax(
-                previous_record[5],
-                fiscal_price,
-                previous_record[4],
-                current_quantity,  # total qty of all transactions of one stock_id
-            )
-            profit_and_loss = calculate_profit_and_loss(
-                fiscal_price,
-                previous_record[4],
-                sell_tax,
-                commission,
-                current_quantity,
-            )
-            # here we are resetting the tax and qty to zero
-            # and transactions to empty list for the next group of transactions
-            current_quantity = 0
-            current_transactions = []
-
-            traded_stocks.append(
-                {
-                    "stock_id": previous_record[0],
-                    "currency": previous_record[1],
-                    "last_rate": previous_record[2],
-                    "symbol": previous_record[3],
-                    "last_price": previous_record[4],
-                    "market": previous_record[5],
-                    "fiscal_price": fiscal_price,
-                    "profit_and_loss": profit_and_loss,
-                }
-            )
-        if i != len(transaction_records) - 1:
-            current_transactions.append(
-                Transaction(
-                    transaction_type=record[6],
-                    quantity=record[7],
-                    price=record[8],
-                    commission=record[9],
-                    date=record[10],
-                )
-            )
-            if record[6] == TransactionType.buy.value:
-                current_quantity += record[7]  # buy type will add qty
-            else:
-                current_quantity -= record[7]  # sell type will reduce qty
-    return traded_stocks
-
-
 @router.get(
     "/traded/{owner_id}",
     response_model=TradedStocks,
@@ -309,39 +218,9 @@ async def get_traded_stocks(
     owner_id: int,
     user: User = Depends(get_current_user),
 ):
-
-    owner_data = await get_owner(user.user_id, owner_id)
-
-    query = (
-        select(
-            [
-                stocks.c.stock_id,
-                currency.c.iso_currency,
-                currency.c.last_rate,
-                stocks.c.symbol,
-                stocks.c.last_price,
-                stocks.c.market,
-                stock_transactions.c.transaction_type,
-                stock_transactions.c.quantity,
-                stock_transactions.c.price,
-                stock_transactions.c.commission,
-                stock_transactions.c.date,
-                stock_transactions.c.tax,
-            ]
-        )
-        .select_from(
-            stock_transactions.join(
-                stocks, stock_transactions.c.stock_id == stocks.c.stock_id
-            ).join(currency, currency.c.currency_id == stocks.c.currency_id)
-        )
-        .where(stock_transactions.c.owner_id == owner_id)
-        .order_by(
-            stocks.c.stock_id,
-            stock_transactions.c.date,
-        )
-    )
-    records = await database.fetch_all(query)
-    return {"stocks": prepare_traded_stocks(records, owner_data[1])}
+    await get_owner(user.user_id, owner_id)
+    records = await get_transaction_records([owner_id])
+    return {"stocks": prepare_traded_stocks(records)}
 
 
 @router.delete("/transaction")
@@ -363,15 +242,6 @@ async def delete_stock_transaction(
         stock_transactions.c.stock_transaction_id == transaction.stock_transaction_id
     )
     await database.execute(query)
-
-    # implemented this endpoint: first create a select query
-    # and fetch (database.fetch_one) the transaction
-    # if the transaction doesn't exist raise HttpException with code 422,
-    # call get_owner that checks if the transaction belongs to the user
-    # finally create the delete query (similiar to select but with delete) and than
-    # execute it (example: await database.execute(query))
-    # there is no need to return anything just ending the function without
-    # exceptions returns a 200 code (success)
 
 
 @router.patch("/transaction")
@@ -413,10 +283,14 @@ async def create_stock_alert(
     new_stock_alert: NewStockAlert,
     user: User = Depends(get_current_user),
 ):
+    await get_owner(user.user_id, new_stock_alert.owner_id)
     if (
         new_stock_alert.lower_limit_price is None
         and new_stock_alert.upper_limit_price is None
         and new_stock_alert.dividend_date is None
+        and new_stock_alert.fiscal_price_lower_than is None
+        and new_stock_alert.fiscal_price_greater_than is None
+        and new_stock_alert.profit_and_loss_greater_than is None
     ):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -432,10 +306,14 @@ async def create_stock_alert(
     query = stock_alerts.insert().values(
         stock_alert_id=create_random_id(),
         stock_id=new_stock_alert.stock_id,
-        user_id=user.user_id,
+        owner_id=new_stock_alert.owner_id,
         lower_limit_price=new_stock_alert.lower_limit_price,
         upper_limit_price=new_stock_alert.upper_limit_price,
         dividend_date=new_stock_alert.dividend_date,
+        fiscal_price_lower_than=new_stock_alert.fiscal_price_lower_than,
+        fiscal_price_greater_than=new_stock_alert.fiscal_price_greater_than,
+        profit_and_loss_lower_limit=new_stock_alert.profit_and_loss_lower_limit,
+        profit_and_loss_upper_limit=new_stock_alert.profit_and_loss_upper_limit,
     )
     stock_alert_id = await database.execute(query)
     stock_alert = new_stock_alert.dict()
@@ -443,31 +321,21 @@ async def create_stock_alert(
     return stock_alert
 
 
-@router.get("/alert", response_model=StockAlerts)
+@router.get("/alert/{owner_id}", response_model=StockAlerts)
 @database.transaction()
 async def get_stock_alert(
+    owner_id: int,
     user: User = Depends(get_current_user),
 ):
-    query = stock_alerts.select().where(stock_alerts.c.user_id == user.user_id)
-    records = await database.fetch_all(query)
-    alerts = {"alerts": []}
-    for alert in records:
-        alerts["alerts"].append(
-            {
-                "stock_id": alert.stock_id,
-                "lower_limit_price": alert.lower_limit_price,
-                "upper_limit_price": alert.upper_limit_price,
-                "dividend_date": alert.dividend_date,
-                "stock_alert_id": alert.stock_alert_id,
-            }
-        )
+    await get_owner(user.user_id, owner_id)
+    alerts = {"alerts": await check_stock_alerts(owner_id=owner_id)}
     return alerts
 
 
 @router.delete("/alert")
 @database.transaction()
 async def delete_stock_alert(
-    alert: StockAlertToDelete, user: User = Depends(get_current_user)
+    alert: StockAlertToDelete, _: User = Depends(get_current_user)
 ):
     query = stock_alerts.select().where(
         stock_alerts.c.stock_alert_id == alert.stock_alert_id
@@ -487,7 +355,7 @@ async def delete_stock_alert(
 @router.patch("/alert")
 @database.transaction()
 async def update_stock_alert(
-    alert: StockAlertToUpdate, user: User = Depends(get_current_user)
+    alert: StockAlertToUpdate, _: User = Depends(get_current_user)
 ):
     query = stock_alerts.select().where(
         stock_alerts.c.stock_alert_id == alert.stock_alert_id

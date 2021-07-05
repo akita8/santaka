@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List
+from typing import List, Optional, Tuple
 from enum import Enum
 from os import environ
 from logging import getLogger
@@ -11,12 +11,25 @@ from pytz import timezone, utc
 from sqlalchemy import asc
 from sqlalchemy.sql import select
 
+from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 from santaka.stock.models import (
-    TransactionType,
+    AlertFields,
     NewStockTransaction,
+    DetailedStock,
+    StockAlert,
+    TransactionType,
+    Transaction,
 )
 from santaka.account import Bank
-from santaka.db import database, stocks, currency, stock_transactions
+from santaka.db import (
+    database,
+    stocks,
+    currency,
+    stock_transactions,
+    accounts,
+    owners,
+    stock_alerts,
+)
 
 logger = getLogger(__name__)
 
@@ -56,6 +69,23 @@ MARKET_TIMEZONES = {
 TRADING_START = 8
 TRADING_END = 18
 DEFAULT_TRADING_TIMEZONE = MARKET_TIMEZONES[YahooMarket.ITALY.value]
+
+TransactionRecords = Tuple[
+    int,  # stock_id 0
+    str,  # iso_currency 1
+    Decimal,  # last_rate 2
+    str,  # symbol 3
+    Decimal,  # last_price 4
+    str,  # market 5
+    str,  # transaction_type 6
+    int,  # quantity 7
+    Decimal,  # price 8
+    Decimal,  # commission 9
+    datetime,  # date 10
+    Decimal,  # tax 11
+    str,  # bank 12
+    int,  # owner_id 13
+]
 
 
 class YahooError(Exception):
@@ -157,7 +187,6 @@ def calculate_commission(
             return Decimal("11")
         if market == YahooMarket.UK.value:
             return Decimal("11") + invested * Decimal("0.005")
-            # TODO add buy tax on UK commission transactions es. BP.L 14,95+5,02
         if market == YahooMarket.CANADA.value:
             return Decimal("11") + invested * Decimal("0.005")
     if bank == Bank.BANCA_GENERALI.value and market == YahooMarket.ITALY.value:
@@ -319,17 +348,212 @@ async def update_currency():
         await database.execute(query)
 
 
+def prepare_traded_stocks(
+    transaction_records: List[TransactionRecords],
+) -> List[DetailedStock]:
+    traded_stocks = []
+    previous_stock_id = None
+    if transaction_records:
+        previous_stock_id = transaction_records[0][0]
+        transaction_records.append(
+            [None]
+        )  # this triggers the addition of the last stock
+    current_transactions = []
+    current_quantity = 0
+    for i, record in enumerate(transaction_records):
+        if previous_stock_id != record[0]:
+            previous_stock_id = record[0]
+            previous_record = transaction_records[i - 1]
+            fiscal_price = calculate_fiscal_price(current_transactions)
+            commission = calculate_commission(
+                previous_record[12],
+                previous_record[5],
+                previous_record[4],
+                current_quantity,
+            )
+            sell_tax = calculate_sell_tax(
+                previous_record[5],
+                fiscal_price,
+                previous_record[4],
+                current_quantity,  # total qty of all transactions of one stock_id
+            )
+            profit_and_loss = calculate_profit_and_loss(
+                fiscal_price,
+                previous_record[4],
+                sell_tax,
+                commission,
+                current_quantity,
+            )
+            # here we are resetting the tax and qty to zero
+            # and transactions to empty list for the next group of transactions
+            current_quantity = 0
+            current_transactions = []
+
+            traded_stocks.append(
+                {
+                    "stock_id": previous_record[0],
+                    "currency": previous_record[1],
+                    "last_rate": previous_record[2],
+                    "symbol": previous_record[3],
+                    "last_price": previous_record[4],
+                    "market": previous_record[5],
+                    "fiscal_price": fiscal_price,
+                    "profit_and_loss": profit_and_loss,
+                    "owner_id": previous_record[13],
+                }
+            )
+        if i != len(transaction_records) - 1:
+            current_transactions.append(
+                Transaction(
+                    transaction_type=record[6],
+                    quantity=record[7],
+                    price=record[8],
+                    commission=record[9],
+                    date=record[10],
+                )
+            )
+            if record[6] == TransactionType.buy.value:
+                current_quantity += record[7]  # buy type will add qty
+            else:
+                current_quantity -= record[7]  # sell type will reduce qty
+    return traded_stocks
+
+
+async def get_transaction_records(
+    owner_ids: List[int],
+    stock_id: Optional[int] = None,
+) -> List[TransactionRecords]:
+    query = (
+        select(
+            [
+                stocks.c.stock_id,
+                currency.c.iso_currency,
+                currency.c.last_rate,
+                stocks.c.symbol,
+                stocks.c.last_price,
+                stocks.c.market,
+                stock_transactions.c.transaction_type,
+                stock_transactions.c.quantity,
+                stock_transactions.c.price,
+                stock_transactions.c.commission,
+                stock_transactions.c.date,
+                stock_transactions.c.tax,
+                accounts.c.bank,
+                owners.c.owner_id,
+            ]
+        )
+        .select_from(
+            stock_transactions.join(
+                stocks, stock_transactions.c.stock_id == stocks.c.stock_id
+            )
+            .join(currency, currency.c.currency_id == stocks.c.currency_id)
+            .join(owners, stock_transactions.c.owner_id == owners.c.owner_id)
+            .join(accounts, owners.c.account_id == accounts.c.account_id)
+        )
+        .where(stock_transactions.c.owner_id.in_(owner_ids))
+        .order_by(
+            stocks.c.stock_id,
+            stock_transactions.c.date,
+        )
+    )
+    if stock_id is not None:
+        query = query.where(stocks.c.stock_id == stock_id)
+    return await database.fetch_all(query)
+
+
 def check_dividend_date(dividend_date: datetime) -> bool:
-    pass
+    return dividend_date >= datetime.utcnow()
 
 
 def check_lower_limit_price(last_price: Decimal, lower_limit: Decimal) -> bool:
-    pass
+    return last_price <= lower_limit
 
 
 def check_upper_limit_price(last_price: Decimal, upper_limit: Decimal) -> bool:
-    pass
+    return last_price > upper_limit
 
 
-# TODO implement this functions and related tests creting a new file test_utils.py
-# in tests\stock
+def check_fiscal_price_lower_than(last_price: Decimal, fiscal_price: Decimal) -> bool:
+    return last_price > fiscal_price
+
+
+def check_fiscal_price_greater_than(last_price: Decimal, fiscal_price: Decimal) -> bool:
+    return last_price < fiscal_price
+
+
+def check_profit_and_loss_upper_limit(limit: Decimal, profit_and_loss: Decimal) -> bool:
+    return profit_and_loss > limit
+
+
+def check_profit_and_loss_lower_limit(limit: Decimal, profit_and_loss: Decimal) -> bool:
+    return profit_and_loss < limit
+
+
+async def check_stock_alerts(
+    stock_id: Optional[int] = None, owner_id: Optional[int] = None
+) -> List[StockAlert]:
+    query = stock_alerts.select()
+    if stock_id is not None:
+        query = query.where(stock_alerts.c.stock_id == stock_id)
+    if owner_id is not None:
+        query = query.where(stock_alerts.c.owner_id == owner_id)
+    alert_records = await database.fetch_all(query)
+    indexed_alerts = {}
+    owner_ids = []
+    for alert in alert_records:
+        indexed_alerts[alert.owner_id] = alert
+        owner_ids.append(alert.owner_id)
+    transaction_records = await get_transaction_records(owner_ids, stock_id)
+    traded_stocks = prepare_traded_stocks(transaction_records)
+    alerts = []
+    for stock in traded_stocks:
+        alert = indexed_alerts[stock["owner_id"]]
+        triggered_fields = []
+        if alert.lower_limit_price is not None and check_lower_limit_price(
+            stock["last_price"], alert.lower_limit_price
+        ):
+            triggered_fields.append(AlertFields.LOWER_LIMIT_PRICE)
+        if alert.upper_limit_price is not None and check_upper_limit_price(
+            stock["last_price"], alert.upper_limit_price
+        ):
+            triggered_fields.append(AlertFields.UPPER_LIMIT_PRICE)
+        if alert.dividend_date is not None and check_dividend_date(alert.dividend_date):
+            triggered_fields.append(AlertFields.DIVIDEND_DATE)
+        if alert.fiscal_price_lower_than and check_fiscal_price_lower_than(
+            stock["last_price"], stock["fiscal_price"]
+        ):
+            triggered_fields.append(AlertFields.FISCAL_PRICE_LOWER_THAN)
+        if alert.fiscal_price_greater_than and check_fiscal_price_greater_than(
+            stock["last_price"], stock["fiscal_price"]
+        ):
+            triggered_fields.append(AlertFields.FISCAL_PRICE_GREATER_THAN)
+        if (
+            alert.profit_and_loss_lower_limit is not None
+            and check_profit_and_loss_lower_limit(
+                alert.profit_and_loss_lower_limit, stock["profit_and_loss"]
+            )
+        ):
+            triggered_fields.append(AlertFields.PROFIT_AND_LOSS_LOWER_LIMIT)
+        if (
+            alert.profit_and_loss_upper_limit is not None
+            and check_profit_and_loss_upper_limit(
+                alert.profit_and_loss_upper_limit, stock["profit_and_loss"]
+            )
+        ):
+            triggered_fields.append(AlertFields.PROFIT_AND_LOSS_UPPER_LIMIT)
+        alerts.append(
+            {
+                "stock_id": alert.stock_id,
+                "owner_id": alert.owner_id,
+                "lower_limit_price": alert.lower_limit_price,
+                "upper_limit_price": alert.upper_limit_price,
+                "dividend_date": alert.dividend_date,
+                "fiscal_price_lower_than": alert.fiscal_price_lower_than,
+                "fiscal_price_greater_than": alert.fiscal_price_greater_than,
+                "profit_and_loss_lower_limit": alert.profit_and_loss_lower_limit,
+                "profit_and_loss_upper_limit": alert.profit_and_loss_upper_limit,
+                "stock_alert_id": alert.stock_alert_id,
+                "triggered_fields": triggered_fields,
+            }
+        )
+    return alerts

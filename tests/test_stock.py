@@ -279,6 +279,11 @@ def test_calculate_sell_tax(
     [
         [datetime(2021, 6, 11, 9, 0, 0, 0), ["LSE", "EXTRA", "Milan"]],
         [datetime(2021, 6, 16, 19, 0, 0, 0), ["NasdaqGS", "NYSE", "Toronto"]],
+        [datetime(2021, 7, 4, 19, 0, 0, 0), []],
+        [
+            datetime(2021, 7, 6, 15, 0, 0, 0),
+            ["NasdaqGS", "NYSE", "LSE", "EXTRA", "Milan", "Toronto"],
+        ],
     ],
 )  # TODO add some test cases
 def test_get_active_markets(dt: datetime, expected_markets: List[str]):

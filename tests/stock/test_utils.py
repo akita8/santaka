@@ -4,16 +4,15 @@ from datetime import datetime
 
 from pytest import mark, approx
 
-from santaka.stock.views import prepare_traded_stocks, TransactionRecords
-from santaka.stock.utils import YahooMarket
+from santaka.stock.utils import YahooMarket, prepare_traded_stocks, TransactionRecords
 from santaka.stock.models import TransactionType
 from santaka.account import Bank
 
 
 @mark.parametrize(
-    ["transaction_records", "bank", "expected_stocks"],
+    ["transaction_records", "expected_stocks"],
     [
-        [[], Bank.FINECOBANK.value, []],
+        [[], []],
         [
             [
                 (
@@ -29,9 +28,10 @@ from santaka.account import Bank
                     Decimal("3.94"),
                     datetime(2020, 3, 24),
                     Decimal("0"),
+                    Bank.FINECOBANK.value,
+                    1,
                 ),
             ],
-            Bank.FINECOBANK.value,
             [
                 {
                     "fiscal_price": Decimal("46.394"),
@@ -54,9 +54,10 @@ from santaka.account import Bank
                     Decimal("2.95"),
                     datetime(2020, 5, 14),
                     Decimal("0"),
+                    Bank.FINECOBANK.value,
+                    1,
                 ),
             ],
-            Bank.FINECOBANK.value,
             [
                 {
                     "fiscal_price": Decimal("5.989"),
@@ -79,9 +80,10 @@ from santaka.account import Bank
                     Decimal("14.734"),
                     datetime(2021, 1, 12),
                     Decimal("0"),
+                    Bank.CHE_BANCA.value,
+                    1,
                 ),
             ],
-            Bank.CHE_BANCA.value,
             [
                 {
                     "fiscal_price": Decimal("342.855"),
@@ -104,9 +106,10 @@ from santaka.account import Bank
         #             Decimal("14.734"),
         #             datetime(2021, 1, 12),
         #             Decimal("0"),
+        #             Bank.CHE_BANCA.value,
+        #             1,
         #         ),
         #     ],
-        #     Bank.CHE_BANCA.value,
         #     [
         #         {
         #             "fiscal_price": Decimal("342.855"),
@@ -118,10 +121,9 @@ from santaka.account import Bank
 )
 def test_prepare_traded_stocks(
     transaction_records: List[TransactionRecords],
-    bank: str,
     expected_stocks: List[Dict],
 ):
-    traded_stocks = prepare_traded_stocks(transaction_records, bank)
+    traded_stocks = prepare_traded_stocks(transaction_records)
 
     assert len(traded_stocks) == len(expected_stocks)
 
