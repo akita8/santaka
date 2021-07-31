@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 from os import environ
 from logging import getLogger
@@ -15,7 +15,7 @@ from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 from santaka.stock.models import (
     AlertFields,
     NewStockTransaction,
-    DetailedStock,
+    TradedStock,
     StockAlert,
     TransactionType,
     Transaction,
@@ -35,8 +35,10 @@ logger = getLogger(__name__)
 
 YAHOO_QUOTE_URL = "https://query1.finance.yahoo.com/v7/finance/quote"
 YAHOO_FIELD_PRICE = "regularMarketPrice"
+YAHOO_FIELD_FINANCIAL_CURRENCY = "financialCurrency"
 YAHOO_FIELD_MARKET = "fullExchangeName"
 YAHOO_FIELD_CURRENCY = "currency"
+YAHOO_FIELD_NAME = "shortName"
 YAHOO_UPDATE_COOLDOWN = environ.get("YAHOO_UPDATE_COOLDOWN", 60 * 5)
 YAHOO_UPDATE_DELTA = 60 * 60
 
@@ -44,7 +46,7 @@ YAHOO_UPDATE_DELTA = 60 * 60
 class YahooMarket(str, Enum):
     ITALY = "Milan"
     UK = "LSE"
-    EU = "EXTRA"
+    EU = "XETRA"
     USA_NASDAQ = "NasdaqGS"
     USA_NYSE = "NYSE"
     CANADA = "Toronto"
@@ -85,6 +87,7 @@ TransactionRecords = Tuple[
     Decimal,  # tax 11
     str,  # bank 12
     int,  # owner_id 13
+    str,  # financial_currency 14
 ]
 
 
@@ -92,14 +95,20 @@ class YahooError(Exception):
     pass
 
 
-async def get_yahoo_quote(symbols: List[str]):
+async def get_yahoo_quote(symbols: List[str]) -> Dict[str, Any]:
     async with ClientSession() as session:
         async with session.get(
             YAHOO_QUOTE_URL,
             params={
                 "symbols": ",".join(symbols),
                 "fields": ",".join(
-                    [YAHOO_FIELD_PRICE, YAHOO_FIELD_CURRENCY, YAHOO_FIELD_MARKET]
+                    [
+                        YAHOO_FIELD_PRICE,
+                        YAHOO_FIELD_CURRENCY,
+                        YAHOO_FIELD_MARKET,
+                        YAHOO_FIELD_NAME,
+                        YAHOO_FIELD_FINANCIAL_CURRENCY,
+                    ]
                 ),
             },
         ) as resp:
@@ -152,7 +161,7 @@ def validate_stock_transaction(records, transaction: NewStockTransaction):
 
 
 def calculate_commission(
-    bank: str, market: str, price: Decimal, quantity: int
+    bank: str, market: str, price: Decimal, quantity: int, financial_currency: str
 ) -> Decimal:
     invested = price * quantity
     if bank == Bank.FINECOBANK.value:
@@ -198,6 +207,8 @@ def calculate_commission(
         return banca_generali_commission
     if bank == Bank.CHE_BANCA.value:
         che_banca_commission = invested * Decimal("0.0018")
+        if market == YahooMarket.ITALY.value and financial_currency == "USD":
+            return Decimal("12")
         if market == YahooMarket.ITALY.value:
             if che_banca_commission <= Decimal("6"):
                 return Decimal("6")
@@ -225,10 +236,13 @@ def calculate_sell_tax(
     if amount > 0:
         if market == YahooMarket.ITALY.value:
             return amount * ITALIAN_TAX
+        if market == YahooMarket.UK.value:
+            return amount * ITALIAN_TAX
         if market in DOUBLE_TAX_MARKETS:
             tax = amount * DOUBLE_TAX_MARKETS[market]
             foreign_taxed_amount = amount - tax
             return foreign_taxed_amount * ITALIAN_TAX + tax
+
     return Decimal("0")
 
 
@@ -350,7 +364,7 @@ async def update_currency():
 
 def prepare_traded_stocks(
     transaction_records: List[TransactionRecords],
-) -> List[DetailedStock]:
+) -> List[TradedStock]:
     traded_stocks = []
     previous_stock_id = None
     if transaction_records:
@@ -364,30 +378,30 @@ def prepare_traded_stocks(
         if previous_stock_id != record[0]:
             previous_stock_id = record[0]
             previous_record = transaction_records[i - 1]
-            fiscal_price = calculate_fiscal_price(current_transactions)
-            commission = calculate_commission(
-                previous_record[12],
-                previous_record[5],
-                previous_record[4],
-                current_quantity,
-            )
-            sell_tax = calculate_sell_tax(
-                previous_record[5],
-                fiscal_price,
-                previous_record[4],
-                current_quantity,  # total qty of all transactions of one stock_id
-            )
-            profit_and_loss = calculate_profit_and_loss(
-                fiscal_price,
-                previous_record[4],
-                sell_tax,
-                commission,
-                current_quantity,
-            )
-            # here we are resetting the tax and qty to zero
-            # and transactions to empty list for the next group of transactions
-            current_quantity = 0
-            current_transactions = []
+            fiscal_price = 0
+            profit_and_loss = 0
+            if current_quantity > 0:
+                fiscal_price = calculate_fiscal_price(current_transactions)
+                commission = calculate_commission(
+                    previous_record[12],
+                    previous_record[5],
+                    previous_record[4],
+                    current_quantity,
+                    previous_record[14],
+                )
+                sell_tax = calculate_sell_tax(
+                    previous_record[5],
+                    fiscal_price,
+                    previous_record[4],
+                    current_quantity,  # total qty of all transactions of one stock_id
+                )
+                profit_and_loss = calculate_profit_and_loss(
+                    fiscal_price,
+                    previous_record[4],
+                    sell_tax,
+                    commission,
+                    current_quantity,
+                )
 
             traded_stocks.append(
                 {
@@ -400,8 +414,14 @@ def prepare_traded_stocks(
                     "fiscal_price": fiscal_price,
                     "profit_and_loss": profit_and_loss,
                     "owner_id": previous_record[13],
+                    "current_quantity": current_quantity,
                 }
             )
+
+            # here we are resetting the tax and qty to zero
+            # and transactions to empty list for the next group of transactions
+            current_quantity = 0
+            current_transactions = []
         if i != len(transaction_records) - 1:
             current_transactions.append(
                 Transaction(
@@ -440,6 +460,7 @@ async def get_transaction_records(
                 stock_transactions.c.tax,
                 accounts.c.bank,
                 owners.c.owner_id,
+                stocks.c.financial_currency,
             ]
         )
         .select_from(

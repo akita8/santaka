@@ -30,6 +30,7 @@ from santaka.account import Bank
                     Decimal("0"),
                     Bank.FINECOBANK.value,
                     1,
+                    "USD",
                 ),
             ],
             [
@@ -56,6 +57,7 @@ from santaka.account import Bank
                     Decimal("0"),
                     Bank.FINECOBANK.value,
                     1,
+                    "EURO",
                 ),
             ],
             [
@@ -82,6 +84,7 @@ from santaka.account import Bank
                     Decimal("0"),
                     Bank.CHE_BANCA.value,
                     1,
+                    "USD",
                 ),
             ],
             [

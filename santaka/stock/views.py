@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from fastapi import status, HTTPException, Depends, APIRouter
+from sqlalchemy.sql import select
 
 from santaka.db import (
     database,
@@ -9,6 +10,9 @@ from santaka.db import (
     stock_transactions,
     create_random_id,
     stock_alerts,
+    users,
+    accounts,
+    owners,
 )
 from santaka.user import User, get_current_user
 from santaka.account import get_owner
@@ -21,15 +25,22 @@ from santaka.stock.models import (
     StockAlertToDelete,
     StockAlertToUpdate,
     StockToDelete,
+    StockToUpdate,
     NewStockTransaction,
     StockTransaction,
     StockTransactionHistory,
+    Stocks,
     TradedStocks,
     StockTransactionToDelete,
     StockTransactionToUpdate,
+    UpdatedCurrency,
+    UpdatedStocks,
+    UpdatedStock,
 )
 from santaka.stock.utils import (
+    YAHOO_FIELD_FINANCIAL_CURRENCY,
     call_yahoo_from_view,
+    get_yahoo_quote,
     validate_stock_transaction,
     prepare_traded_stocks,
     get_transaction_records,
@@ -37,6 +48,7 @@ from santaka.stock.utils import (
     YAHOO_FIELD_CURRENCY,
     YAHOO_FIELD_MARKET,
     YAHOO_FIELD_PRICE,
+    YAHOO_FIELD_NAME,
 )
 
 router = APIRouter(prefix="/stock", tags=["stock"])
@@ -46,12 +58,12 @@ router = APIRouter(prefix="/stock", tags=["stock"])
 @database.transaction()
 async def create_stock(new_stock: NewStock, user: User = Depends(get_current_user)):
     # query the database to check if stock already exists
-    query = stocks.select().where(stocks.c.symbol == new_stock.symbol)
+    stock_symbol = new_stock.symbol.upper()
+    query = stocks.select().where(stocks.c.symbol == stock_symbol)
     stock_record = await database.fetch_one(query)
 
     if stock_record is None:
         # stock not found in the database, calling yahoo to get stock info
-        stock_symbol = new_stock.symbol.upper()
         stock_info = await call_yahoo_from_view(stock_symbol)
         iso_currency = stock_info[YAHOO_FIELD_CURRENCY]
 
@@ -86,11 +98,13 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
         # create stock record
         query = stocks.insert().values(
             stock_id=create_random_id(),
+            short_name=stock_info[YAHOO_FIELD_NAME],
             currency_id=currency_id,
             market=stock_info[YAHOO_FIELD_MARKET],
             symbol=stock_symbol,
             last_price=stock_info[YAHOO_FIELD_PRICE],
             last_update=datetime.utcnow(),
+            financial_currency=stock_info[YAHOO_FIELD_FINANCIAL_CURRENCY],
         )
         stock_id = await database.execute(query)
     else:
@@ -102,6 +116,131 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
     stock["stock_id"] = stock_id
 
     return stock
+
+
+@router.post("/currency/{currency_id}", response_model=UpdatedCurrency)
+@database.transaction()
+async def update_currency(currency_id: int, user: User = Depends(get_current_user)):
+    query = currency.select().where(currency.c.currency_id == currency_id)
+    currency_record = await database.fetch_one(query)
+    if currency_record.iso_currency == user.base_currency:
+        return {
+            "iso_currency": currency_record.iso_currency,
+            "last_rate": 1,
+        }
+    currency_info = await call_yahoo_from_view(currency_record.symbol)
+    query = currency.update()
+    query = query.values(last_rate=currency_info[YAHOO_FIELD_PRICE])
+    query = query.where(currency.c.symbol == currency_record.symbol)
+    await database.execute(query)
+    return {
+        "iso_currency": currency_record.iso_currency,
+        "last_rate": currency_info[YAHOO_FIELD_PRICE],
+    }
+
+
+@router.post("/{stock_id}", response_model=UpdatedStock)
+@database.transaction()
+async def update_stock_quote(stock_id: int, user: User = Depends(get_current_user)):
+    query = stocks.select().where(stocks.c.stock_id == stock_id)
+    record = await database.fetch_one(query)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock{stocks.symbol} doesn't exist",
+        )
+    quote = await call_yahoo_from_view(record.symbol)
+    query = stocks.update()
+    query = query.values(
+        last_price=quote[YAHOO_FIELD_PRICE],
+        last_update=datetime.utcnow(),
+    )
+    query = query.where(stocks.c.symbol == record.symbol)
+    await database.execute(query)
+    return {"symbol": record.symbol, "last_price": quote[YAHOO_FIELD_PRICE]}
+
+
+@router.post("/", response_model=UpdatedStocks)
+@database.transaction()
+async def update_stocks(user: User = Depends(get_current_user)):
+    query = select([stocks.c.symbol])
+    join_clause = users.join(accounts, accounts.c.user_id == users.c.user_id)
+    join_clause = join_clause.join(owners, owners.c.account_id == accounts.c.account_id)
+    join_clause = join_clause.join(
+        stock_transactions, stock_transactions.c.owner_id == owners.c.owner_id
+    )
+    join_clause = join_clause.join(
+        stocks, stocks.c.stock_id == stock_transactions.c.stock_id
+    )
+    query = query.select_from(join_clause)
+    query = query.where(users.c.user_id == user.user_id)
+    query = query.distinct()
+
+    symbol_records = await database.fetch_all(query)
+    symbols = []
+    for record in symbol_records:
+        symbols.append(record[0])
+    quotes = await get_yahoo_quote(symbols)
+    updated_stocks = []
+    for symbol in quotes:
+        query = stocks.update()
+        query = query.values(
+            last_price=quotes[symbol][YAHOO_FIELD_PRICE],
+            last_update=datetime.utcnow(),
+        )
+        query = query.where(stocks.c.symbol == symbol)
+        await database.execute(query)
+        updated_stocks.append(
+            {"symbol": symbol, "last_price": quotes[symbol][YAHOO_FIELD_PRICE]}
+        )
+    return {"stocks": updated_stocks}
+
+
+@router.get("/", response_model=Stocks)
+async def get_stocks(_: User = Depends(get_current_user)):
+    query = stocks.select()
+    records = await database.fetch_all(query)
+    stocks_entered = {"stocks": []}
+    for stock in records:
+        stocks_entered["stocks"].append(
+            {
+                "last_price": stock.last_price,
+                "short_name": stock.short_name,
+                "symbol": stock.symbol,
+                "stock_id": stock.stock_id,
+                "market": stock.market,
+                "currency_id": stock.currency_id,
+            }
+        )
+    return stocks_entered
+
+
+@router.patch("/")
+@database.transaction()
+async def update_stock(
+    stock_to_update: StockToUpdate,
+    _: User = Depends(get_current_user),
+):
+    query = stocks.select().where(stocks.c.stock_id == stock_to_update.stock_id)
+    record = await database.fetch_one(query)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock{stocks.stock_id} doesn't exist",
+        )
+    stock_dict = stock_to_update.dict()
+    values = {}
+    for key in stock_dict:
+        if stock_dict[key] is not None and key != "stock_id":
+            values[key] = stock_dict[key]
+    if not values:
+        return
+    query = (
+        stocks.update()
+        .where(stocks.c.stock_id == stock_to_update.stock_id)
+        .values(**values)
+    )
+    await database.execute(query)
 
 
 @router.delete("/")
@@ -119,7 +258,7 @@ async def delete_stock(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Stock_id {stock_to_delete.stock_id} is actually in use",
         )
-        query = stocks.delete().where(stocks.c.stock_id == stock_to_delete.stock_id)
+    query = stocks.delete().where(stocks.c.stock_id == stock_to_delete.stock_id)
     await database.execute(query)
 
 
@@ -135,9 +274,7 @@ async def create_stock_transaction(
 ):
     await get_owner(user.user_id, owner_id)
     query = stocks.select().where(stocks.c.stock_id == new_stock_transaction.stock_id)
-    record = await database.fetch_one(
-        query
-    )  # Fab: fetch_one takes only the first record
+    record = await database.fetch_one(query)
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -191,7 +328,6 @@ async def get_stock_transaction_history(
         .where(stock_transactions.c.owner_id == owner_id)
         .where(stock_transactions.c.stock_id == stock_id)
     )
-    # Fab: fetch_all returns a list of records that match the query
     records = await database.fetch_all(query)
     history = {"transactions": []}
     for transaction in records:
@@ -383,3 +519,23 @@ async def update_stock_alert(
         .values(**values)
     )
     await database.execute(query)
+
+
+# TODO add move transaction view
+# /{stock_id}/move/{owner-id} with body that contains list of stock_transaction_id
+# steps:
+# 1) check that owner_id (url parameter) exists (use get_owner func)
+# 2) retrieve transactions
+#    (select + where with in condition, search for in_ method in the codebase)
+# 3) validate transactions check that their stock_id matches the one received
+#    (url parameter) and check that the first one is a "buy"
+# 4) update the owner_id of target transactions (update query +
+#    where with in condition on the list of stock_transaction_id same as point 2)
+
+
+# TODO Refactor create stock dividing in in different views:
+#      one to get stock (from db or yahoo), one to create stock,
+#      one to get currency, one to create currency
+
+
+# TODO Refactor create_account separating accounts and owners

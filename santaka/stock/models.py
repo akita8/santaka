@@ -15,6 +15,18 @@ class Stock(NewStock):
     stock_id: int
 
 
+class DetailedStock(BaseModel):
+    short_name: str
+    symbol: str
+    stock_id: int
+    market: str
+    last_price: Decimal
+
+
+class Stocks(BaseModel):
+    stocks: List[DetailedStock]
+
+
 class TransactionType(str, Enum):
     buy = "buy"
     sell = "sell"
@@ -41,7 +53,7 @@ class StockTransactionHistory(BaseModel):
     transactions: List[StockTransaction]
 
 
-class DetailedStock(Stock):
+class TradedStock(Stock):
     market: str
     currency: str
     last_price: Decimal
@@ -49,10 +61,20 @@ class DetailedStock(Stock):
     fiscal_price: Decimal
     profit_and_loss: Decimal
     owner_id: int
+    current_quantity: int
 
 
 class TradedStocks(BaseModel):
-    stocks: List[DetailedStock]
+    stocks: List[TradedStock]
+
+
+class UpdatedStock(BaseModel):
+    symbol: str
+    last_price: Decimal
+
+
+class UpdatedStocks(BaseModel):
+    stocks: List[UpdatedStock]
 
 
 class SplitEvent(BaseModel):
@@ -75,6 +97,13 @@ class StockTransactionToUpdate(BaseModel):
 
 class StockToDelete(BaseModel):
     stock_id: int
+
+
+class StockToUpdate(BaseModel):
+    stock_id: int
+    short_name: Optional[str] = None
+    symbol: Optional[str] = None
+    market: Optional[str] = None
 
 
 class AlertFields(str, Enum):
@@ -122,3 +151,8 @@ class StockAlertToUpdate(BaseModel):
     profit_and_loss_lower_limit: Optional[Decimal] = None
     profit_and_loss_upper_limit: Optional[Decimal] = None
     disabled_fields: Optional[List[AlertFields]] = None
+
+
+class UpdatedCurrency(BaseModel):
+    iso_currency: str
+    last_rate: Decimal

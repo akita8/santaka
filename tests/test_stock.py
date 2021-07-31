@@ -51,7 +51,7 @@ def test_total_quantity_greater_than_sell():
 
 
 @mark.parametrize(
-    ["bank", "market", "price", "quantity", "expected"],
+    ["bank", "market", "price", "quantity", "expected", "financial_currency"],
     [
         [
             Bank.FINECOBANK.value,
@@ -59,6 +59,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("200"),
             10,
             Decimal("3.8"),
+            "",
         ],
         [
             Bank.FINECOBANK.value,
@@ -66,6 +67,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("2150"),
             10,
             Decimal("19"),
+            "",
         ],
         [
             Bank.FINECOBANK.value,
@@ -73,6 +75,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("23"),
             10,
             Decimal("2.95"),
+            "",
         ],
         [
             Bank.FINECOBANK.value,
@@ -80,6 +83,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("99.98"),
             3,
             Decimal("2.95"),
+            "",
         ],
         [
             Bank.FINECOBANK.value,
@@ -87,6 +91,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("16.935"),
             60,
             Decimal("20.0305"),
+            "",
         ],
         [
             Bank.FINECOBANK.value,
@@ -94,6 +99,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("216.5"),
             60,
             Decimal("12.95"),
+            "",
         ],
         [
             Bank.BG_SAXO.value,
@@ -101,6 +107,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("44"),
             10,
             Decimal("2.5"),
+            "",
         ],
         [
             Bank.BG_SAXO.value,
@@ -108,6 +115,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("100"),
             50,
             Decimal("8.5"),
+            "",
         ],
         [
             Bank.BG_SAXO.value,
@@ -115,6 +123,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("440"),
             100,
             Decimal("17.5"),
+            "",
         ],
         [
             Bank.BG_SAXO.value,
@@ -122,6 +131,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("44"),
             100,
             Decimal("11"),
+            "",
         ],
         [
             Bank.BG_SAXO.value,
@@ -129,6 +139,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("16.935"),
             60,
             Decimal("16.0805"),
+            "",
         ],
         [
             Bank.BG_SAXO.value,
@@ -136,6 +147,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("44"),
             100,
             Decimal("11"),
+            "",
         ],
         [
             Bank.BG_SAXO.value,
@@ -143,6 +155,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("124"),
             30,
             Decimal("29.6"),
+            "",
         ],
         [
             Bank.BANCA_GENERALI.value,
@@ -150,6 +163,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("230"),
             10,
             Decimal("8"),
+            "",
         ],
         [
             Bank.BANCA_GENERALI.value,
@@ -157,6 +171,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("630"),
             10,
             Decimal("9.45"),
+            "",
         ],
         [
             Bank.BANCA_GENERALI.value,
@@ -164,6 +179,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("1630"),
             10,
             Decimal("20"),
+            "",
         ],
         [
             Bank.CHE_BANCA.value,
@@ -171,6 +187,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("11.1"),
             50,
             Decimal("6"),
+            "",
         ],
         [
             Bank.CHE_BANCA.value,
@@ -178,6 +195,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("75"),
             100,
             Decimal("13.5"),
+            "",
         ],
         [
             Bank.CHE_BANCA.value,
@@ -185,6 +203,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("150"),
             100,
             Decimal("25"),
+            "",
         ],
         [
             Bank.CHE_BANCA.value,
@@ -192,6 +211,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("11.1"),
             60,
             Decimal("12"),
+            "",
         ],
         [
             Bank.CHE_BANCA.value,
@@ -199,6 +219,7 @@ def test_total_quantity_greater_than_sell():
             Decimal("75"),
             100,
             Decimal("13.5"),
+            "",
         ],
         [
             Bank.CHE_BANCA.value,
@@ -206,20 +227,20 @@ def test_total_quantity_greater_than_sell():
             Decimal("200"),
             100,
             Decimal("35"),
+            "",
         ],
-        [
-            None,
-            YahooMarket.ITALY.value,
-            Decimal("0"),
-            100,
-            Decimal("0"),
-        ],
+        [None, YahooMarket.ITALY.value, Decimal("0"), 100, Decimal("0"), ""],
     ],
 )
 def test_calculate_commission(
-    bank: str, market: str, price: Decimal, quantity: int, expected: Decimal
+    bank: str,
+    market: str,
+    price: Decimal,
+    quantity: int,
+    expected: Decimal,
+    financial_currency: str,
 ):
-    commission = calculate_commission(bank, market, price, quantity)
+    commission = calculate_commission(bank, market, price, quantity, financial_currency)
     assert commission == expected
 
 
@@ -277,12 +298,12 @@ def test_calculate_sell_tax(
 @mark.parametrize(
     ["dt", "expected_markets"],
     [
-        [datetime(2021, 6, 11, 9, 0, 0, 0), ["LSE", "EXTRA", "Milan"]],
+        [datetime(2021, 6, 11, 9, 0, 0, 0), ["LSE", "XETRA", "Milan"]],
         [datetime(2021, 6, 16, 19, 0, 0, 0), ["NasdaqGS", "NYSE", "Toronto"]],
         [datetime(2021, 7, 4, 19, 0, 0, 0), []],
         [
             datetime(2021, 7, 6, 15, 0, 0, 0),
-            ["NasdaqGS", "NYSE", "LSE", "EXTRA", "Milan", "Toronto"],
+            ["NasdaqGS", "NYSE", "LSE", "XETRA", "Milan", "Toronto"],
         ],
     ],
 )  # TODO add some test cases

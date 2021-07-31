@@ -62,6 +62,16 @@ stocks = sqlalchemy.Table(
     sqlalchemy.Column("stock_id", sqlalchemy.Integer, primary_key=True),
     sqlalchemy.Column("market", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("symbol", sqlalchemy.String, nullable=False, unique=True),
+    sqlalchemy.Column(
+        "financial_currency",
+        sqlalchemy.String,
+        nullable=False,
+    ),
+    sqlalchemy.Column(
+        "short_name",
+        sqlalchemy.String,
+        nullable=False,
+    ),
     sqlalchemy.Column("last_price", sqlalchemy.DECIMAL, nullable=False),
     sqlalchemy.Column("last_update", sqlalchemy.DateTime, nullable=False),
     sqlalchemy.Column(
