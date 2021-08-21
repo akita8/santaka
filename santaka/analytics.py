@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 # from datetime import datetime, timedelta
 
@@ -12,10 +12,19 @@ def calculate_profit_and_loss(
     sell_tax: Decimal,
     sell_commission: Decimal,
     quantity: int,
-) -> Decimal:
-    bought = quantity * fiscal_price
+    last_rate: int,
+) -> Tuple[Decimal, Decimal, Decimal, Decimal]:
+    # TODO refactor functions spliting for ctv invested and profit and loss
+    invested = quantity * fiscal_price
+    current_ctv = quantity * last_price
     sold = quantity * last_price - sell_commission - sell_tax
-    return sold - bought
+    current_ctv_converted = current_ctv / last_rate
+    return (
+        sold - invested,
+        invested,
+        current_ctv,
+        current_ctv_converted,
+    )
 
 
 def calculate_fiscal_price(

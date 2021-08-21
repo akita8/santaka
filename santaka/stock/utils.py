@@ -144,20 +144,38 @@ def validate_stock_transaction(records, transaction: NewStockTransaction):
         # fab:  >> if not << this sentence is the right way to identify an empty list
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="First transaction mast be a buy",
+            detail="First transaction must be a buy",
         )
-    if records and transaction.transaction_type == TransactionType.sell:
-        quantity = 0
-        for record in records:
-            if record.transaction_type == TransactionType.sell.value:
-                quantity -= record.quantity
-            else:
-                quantity += record.quantity
-        if quantity < transaction.quantity:
+    quantity = 0
+    for record in records:
+        if (
+            record.stock_id == transaction.stock_id
+            and record.price == transaction.price
+            and record.quantity == transaction.quantity
+            and record.tax == transaction.tax
+            and record.commission == transaction.commission
+            and record.transaction_type == transaction.transaction_type
+            and record.date.year == transaction.date.year
+            and record.date.month == transaction.date.month
+            and record.date.day == transaction.date.day
+        ):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Cannot sell more than {quantity} stocks",
+                detail="You cannot duplicate a transaction",
             )
+
+        if record.transaction_type == TransactionType.sell.value:
+            quantity -= record.quantity
+        else:
+            quantity += record.quantity
+    if (
+        transaction.transaction_type == TransactionType.sell
+        and quantity < transaction.quantity
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Cannot sell more than {quantity} stocks",
+        )
 
 
 def calculate_commission(
@@ -380,7 +398,7 @@ def prepare_traded_stocks(
             previous_record = transaction_records[i - 1]
             fiscal_price = 0
             profit_and_loss = 0
-            if current_quantity > 0:
+            if current_quantity > 0:  # FIXME use fiscal price split aware quantity
                 fiscal_price = calculate_fiscal_price(current_transactions)
                 commission = calculate_commission(
                     previous_record[12],
@@ -395,19 +413,25 @@ def prepare_traded_stocks(
                     previous_record[4],
                     current_quantity,  # total qty of all transactions of one stock_id
                 )
-                profit_and_loss = calculate_profit_and_loss(
+                (
+                    profit_and_loss,
+                    invested,
+                    current_ctv,
+                    current_ctv_converted,
+                ) = calculate_profit_and_loss(
                     fiscal_price,
                     previous_record[4],
                     sell_tax,
                     commission,
                     current_quantity,
+                    previous_record[2],
                 )
 
             traded_stocks.append(
                 {
                     "stock_id": previous_record[0],
                     "currency": previous_record[1],
-                    "last_rate": previous_record[2],
+                    #  "last_rate": previous_record[2], to be removed
                     "symbol": previous_record[3],
                     "last_price": previous_record[4],
                     "market": previous_record[5],
@@ -415,6 +439,9 @@ def prepare_traded_stocks(
                     "profit_and_loss": profit_and_loss,
                     "owner_id": previous_record[13],
                     "current_quantity": current_quantity,
+                    "invested": invested,
+                    "current_ctv": current_ctv,
+                    "current_ctv_converted": current_ctv_converted,
                 }
             )
 
@@ -483,7 +510,7 @@ async def get_transaction_records(
 
 
 def check_dividend_date(dividend_date: datetime) -> bool:
-    return dividend_date >= datetime.utcnow()
+    return dividend_date <= datetime.utcnow()
 
 
 def check_lower_limit_price(last_price: Decimal, lower_limit: Decimal) -> bool:
@@ -495,11 +522,11 @@ def check_upper_limit_price(last_price: Decimal, upper_limit: Decimal) -> bool:
 
 
 def check_fiscal_price_lower_than(last_price: Decimal, fiscal_price: Decimal) -> bool:
-    return last_price > fiscal_price
+    return last_price < fiscal_price
 
 
 def check_fiscal_price_greater_than(last_price: Decimal, fiscal_price: Decimal) -> bool:
-    return last_price < fiscal_price
+    return last_price > fiscal_price
 
 
 def check_profit_and_loss_upper_limit(limit: Decimal, profit_and_loss: Decimal) -> bool:
@@ -522,13 +549,15 @@ async def check_stock_alerts(
     indexed_alerts = {}
     owner_ids = []
     for alert in alert_records:
-        indexed_alerts[alert.owner_id] = alert
+        indexed_alerts[(alert.owner_id, alert.stock_id)] = alert
         owner_ids.append(alert.owner_id)
     transaction_records = await get_transaction_records(owner_ids, stock_id)
     traded_stocks = prepare_traded_stocks(transaction_records)
     alerts = []
     for stock in traded_stocks:
-        alert = indexed_alerts[stock["owner_id"]]
+        alert = indexed_alerts.get((stock["owner_id"], stock["stock_id"]))
+        if alert is None:
+            continue
         triggered_fields = []
         if alert.lower_limit_price is not None and check_lower_limit_price(
             stock["last_price"], alert.lower_limit_price

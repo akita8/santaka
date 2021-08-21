@@ -118,9 +118,7 @@ async def get_accounts(user: User = Depends(get_current_user)):
         )
         .where(users.c.user_id == user.user_id)
     )
-    records = await database.fetch_all(
-        query
-    )  # Fab: It takes all rows of the database based on previous query
+    records = await database.fetch_all(query)
     account_models = []
     previous_account_id = None
     for record in records:

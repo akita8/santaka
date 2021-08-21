@@ -57,15 +57,21 @@ class TradedStock(Stock):
     market: str
     currency: str
     last_price: Decimal
-    last_rate: Decimal
+    current_ctv_converted: Decimal
     fiscal_price: Decimal
     profit_and_loss: Decimal
     owner_id: int
     current_quantity: int
+    invested: Decimal
+    current_ctv: Decimal
 
 
 class TradedStocks(BaseModel):
     stocks: List[TradedStock]
+    profit_and_loss: Decimal
+    invested: Decimal
+    current_ctv: Decimal
+    current_ctv_converted: Decimal
 
 
 class UpdatedStock(BaseModel):
@@ -93,6 +99,10 @@ class StockTransactionToUpdate(BaseModel):
     tax: Optional[Decimal] = None
     commission: Optional[Decimal] = None
     date: Optional[datetime] = None
+
+
+class StockTransactionsToMove(BaseModel):
+    stock_transaction_ids: List[int]
 
 
 class StockToDelete(BaseModel):

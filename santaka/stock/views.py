@@ -29,6 +29,7 @@ from santaka.stock.models import (
     NewStockTransaction,
     StockTransaction,
     StockTransactionHistory,
+    StockTransactionsToMove,
     Stocks,
     TradedStocks,
     StockTransactionToDelete,
@@ -36,6 +37,7 @@ from santaka.stock.models import (
     UpdatedCurrency,
     UpdatedStocks,
     UpdatedStock,
+    TransactionType,
 )
 from santaka.stock.utils import (
     YAHOO_FIELD_FINANCIAL_CURRENCY,
@@ -356,7 +358,26 @@ async def get_traded_stocks(
 ):
     await get_owner(user.user_id, owner_id)
     records = await get_transaction_records([owner_id])
-    return {"stocks": prepare_traded_stocks(records)}
+    traded_stocks = prepare_traded_stocks(records)
+    invested = 0
+    current_ctv = 0
+    profit_and_loss = 0
+    current_ctv_converted = 0
+    for stock in traded_stocks:
+        invested += stock["invested"]
+        current_ctv += stock["current_ctv"]
+        profit_and_loss += stock["profit_and_loss"]
+        current_ctv_converted += stock["current_ctv_converted"]
+
+    # TODO add converted_current_ctv field to each traded_stock
+    # and to the sum of all traded stocks, remove last_rate from response
+    return {
+        "stocks": traded_stocks,
+        "invested": invested,
+        "current_ctv": current_ctv,
+        "profit_and_loss": profit_and_loss,
+        "current_ctv_converted": current_ctv_converted,
+    }
 
 
 @router.delete("/transaction")
@@ -411,6 +432,48 @@ async def update_stock_transaction(
         .values(**values)
     )
     await database.execute(query)
+
+
+@router.post("/{stock_id}/move/{owner_id}", response_model=StockTransactionsToMove)
+@database.transaction()
+async def move_stock_transaction(
+    stock_transaction_to_move: StockTransactionsToMove,
+    stock_id: int,
+    owner_id: int,
+    user: User = Depends(get_current_user),
+):
+    await get_owner(user.user_id, owner_id)
+    query = stock_transactions.select().where(
+        stock_transactions.c.stock_transaction_id.in_(
+            stock_transaction_to_move.stock_transaction_ids
+        )
+    )
+    records = await database.fetch_all(query)
+    if records[0].transaction_type != TransactionType.buy.value:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"First transaction {records[0].stock_transaction_id} is not a BUY",
+        )
+    for record in records:
+        if record.stock_id != stock_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Stock_id {record.stock_id} doesn't exist",
+            )
+    query = (
+        stock_transactions.update()
+        .values(owner_id=owner_id)
+        .where(
+            stock_transactions.c.stock_transaction_id.in_(
+                stock_transaction_to_move.stock_transaction_ids
+            )
+        )
+    )
+    await database.execute(query)
+    return stock_transaction_to_move
+
+
+# TODO add get currencies view
 
 
 @router.put("/alert", response_model=StockAlert)
@@ -519,18 +582,6 @@ async def update_stock_alert(
         .values(**values)
     )
     await database.execute(query)
-
-
-# TODO add move transaction view
-# /{stock_id}/move/{owner-id} with body that contains list of stock_transaction_id
-# steps:
-# 1) check that owner_id (url parameter) exists (use get_owner func)
-# 2) retrieve transactions
-#    (select + where with in condition, search for in_ method in the codebase)
-# 3) validate transactions check that their stock_id matches the one received
-#    (url parameter) and check that the first one is a "buy"
-# 4) update the owner_id of target transactions (update query +
-#    where with in condition on the list of stock_transaction_id same as point 2)
 
 
 # TODO Refactor create stock dividing in in different views:
