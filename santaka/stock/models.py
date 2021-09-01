@@ -65,6 +65,7 @@ class TradedStock(Stock):
     current_quantity: int
     invested: Decimal
     current_ctv: Decimal
+    short_name: str
 
 
 class TradedStocks(BaseModel):

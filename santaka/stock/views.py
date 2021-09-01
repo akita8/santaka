@@ -265,7 +265,7 @@ async def delete_stock(
 
 
 @router.put(
-    "/transaction/{owner_id}",
+    "/transaction/{owner_id}/",
     response_model=StockTransaction,
 )
 @database.transaction()
@@ -351,13 +351,17 @@ async def get_stock_transaction_history(
 
 
 @router.get(
-    "/traded/{owner_id}",
+    "/traded/{owner_id}/",
     response_model=TradedStocks,
 )
 async def get_traded_stocks(
     owner_id: int,
     user: User = Depends(get_current_user),
 ):
+    # FIXME invested and profit_and_loss totals do not make sense
+    # as they are calculated now
+    # they need to take account of exchange rates.
+    #  Current_ctv is just wrong and needs to be removed
     await get_owner(user.user_id, owner_id)
     records = await get_transaction_records([owner_id])
     traded_stocks = prepare_traded_stocks(records)
