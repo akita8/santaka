@@ -30,6 +30,7 @@ accounts = sqlalchemy.Table(
         nullable=False,
     ),
     sqlalchemy.Column("bank", sqlalchemy.String, nullable=False),
+    # TODO  sqlalchemy.Column("bank_name", sqlalchemy.String, nullable=True),
     sqlalchemy.Column("account_number", sqlalchemy.String, nullable=False),
 )
 
@@ -104,6 +105,7 @@ stock_transactions = sqlalchemy.Table(
     sqlalchemy.Column("commission", sqlalchemy.DECIMAL, default=0),
     sqlalchemy.Column("date", sqlalchemy.DateTime, nullable=False),
     sqlalchemy.Column("transaction_type", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("transaction_note", sqlalchemy.String, nullable=True),
 )
 stock_alerts = sqlalchemy.Table(
     "stock_alerts",

@@ -39,6 +39,7 @@ class Transaction(BaseModel):
     commission: Decimal = 0
     date: datetime
     transaction_type: TransactionType
+    transaction_note: Optional[str] = None
 
 
 class NewStockTransaction(Transaction):

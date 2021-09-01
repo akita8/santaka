@@ -30,9 +30,10 @@ class Bank(str, Enum):
 
 
 class NewAccount(BaseModel):
-    owners: conlist(str, min_items=1)  # fab: checks that exists at least one owner
+    owners: conlist(str, min_items=1)
     bank: Bank
     account_number: str
+    # TODO add bank_name: str
 
 
 class Account(NewAccount):
@@ -82,6 +83,7 @@ async def create_account(
         account_number=new_account.account_number,
         bank=new_account.bank,
         user_id=user.user_id,
+        # TODO bank_name=new_account.bank_name,
     )
     account_id = await database.execute(query)
     new_owners = []
@@ -129,6 +131,7 @@ async def get_accounts(user: User = Depends(get_current_user)):
                     "account_number": record[2],
                     "account_id": record[1],
                     "owners": [{"name": record[3], "owner_id": record[4]}],
+                    # TODO "bank_name": record[5],
                 }
             )
         else:

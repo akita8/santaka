@@ -158,6 +158,7 @@ def validate_stock_transaction(records, transaction: NewStockTransaction):
             and record.date.year == transaction.date.year
             and record.date.month == transaction.date.month
             and record.date.day == transaction.date.day
+            and record.transaction_note == transaction.transaction_note
         ):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -398,6 +399,9 @@ def prepare_traded_stocks(
             previous_record = transaction_records[i - 1]
             fiscal_price = 0
             profit_and_loss = 0
+            invested = 0
+            current_ctv = 0
+            current_ctv_converted = 0
             if current_quantity > 0:  # FIXME use fiscal price split aware quantity
                 fiscal_price = calculate_fiscal_price(current_transactions)
                 commission = calculate_commission(
@@ -431,7 +435,6 @@ def prepare_traded_stocks(
                 {
                     "stock_id": previous_record[0],
                     "currency": previous_record[1],
-                    #  "last_rate": previous_record[2], to be removed
                     "symbol": previous_record[3],
                     "last_price": previous_record[4],
                     "market": previous_record[5],

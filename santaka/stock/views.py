@@ -307,6 +307,7 @@ async def create_stock_transaction(
         transaction_type=new_stock_transaction.transaction_type,
         date=new_stock_transaction.date,
         owner_id=owner_id,
+        transaction_note=new_stock_transaction.transaction_note,
     )
     stock_transaction_id = await database.execute(query)
     stock_transaction = new_stock_transaction.dict()
@@ -343,6 +344,7 @@ async def get_stock_transaction_history(
                 "transaction_type": transaction.transaction_type,
                 "stock_id": stock_id,
                 "stock_transaction_id": transaction.stock_transaction_id,
+                "transaction_note": transaction.transaction_note,
             }
         )
     return history
