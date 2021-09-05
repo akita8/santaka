@@ -86,6 +86,7 @@ async def get_owner(user_id: int, owner_id: int):
 async def create_account(
     new_account: NewAccount, user: User = Depends(get_current_user)
 ):
+    # TODO refactor by splitting in two views account creation and owner creation
     query = accounts.insert().values(
         account_id=create_random_id(),
         account_number=new_account.account_number,

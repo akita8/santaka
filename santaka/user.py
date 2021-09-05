@@ -110,7 +110,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     return user
 
 
-@router.post("/token", response_model=Token)
+@router.post("/token/", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = await authenticate_user(form_data.username, form_data.password)
     if not user:
@@ -123,7 +123,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/token/refresh", response_model=Token)
+@router.get("/token/refresh/", response_model=Token)
 def refresh_token(user: User = Depends(get_current_user)):
     access_token = create_access_token(user.username)
     return {"access_token": access_token, "token_type": "bearer"}

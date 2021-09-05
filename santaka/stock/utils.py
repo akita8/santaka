@@ -88,6 +88,7 @@ TransactionRecords = Tuple[
     str,  # bank 12
     int,  # owner_id 13
     str,  # financial_currency 14
+    str,  # short_name 15
 ]
 
 
@@ -445,6 +446,7 @@ def prepare_traded_stocks(
                     "invested": invested,
                     "current_ctv": current_ctv,
                     "current_ctv_converted": current_ctv_converted,
+                    "short_name": previous_record[15],
                 }
             )
 
@@ -491,6 +493,7 @@ async def get_transaction_records(
                 accounts.c.bank,
                 owners.c.owner_id,
                 stocks.c.financial_currency,
+                stocks.c.short_name,
             ]
         )
         .select_from(
