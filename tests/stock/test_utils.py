@@ -157,12 +157,12 @@ def test_check_dividend_date():
 
 def test_check_fiscal_price_lower_than():
     answer = check_fiscal_price_lower_than(Decimal("10"), Decimal("11"))
-    assert not answer
+    assert answer
 
 
 def test_check_fiscal_price_greater_than():
     answer = check_fiscal_price_greater_than(Decimal("11"), Decimal("10"))
-    assert not answer
+    assert answer
 
 
 def test_check_profit_and_loss_greater_than():

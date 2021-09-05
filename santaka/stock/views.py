@@ -38,6 +38,7 @@ from santaka.stock.models import (
     UpdatedStocks,
     UpdatedStock,
     TransactionType,
+    UpdatedCurrencies,
 )
 from santaka.stock.utils import (
     YAHOO_FIELD_FINANCIAL_CURRENCY,
@@ -139,6 +140,35 @@ async def update_currency(currency_id: int, user: User = Depends(get_current_use
         "iso_currency": currency_record.iso_currency,
         "last_rate": currency_info[YAHOO_FIELD_PRICE],
     }
+
+
+@router.post("/currency/", response_model=UpdatedCurrencies)
+async def update_currencies(user: User = Depends(get_current_user)):
+    query = currency.select().where(currency.c.iso_currency != user.base_currency)
+    symbol_records = await database.fetch_all(query)
+    symbols = []
+    for record in symbol_records:
+        symbols.append(record.symbol)
+    currencies_to_update = await get_yahoo_quote(symbols)
+    updated_currencies = []
+    for symbol in currencies_to_update:
+        last_rate = currencies_to_update[symbol][YAHOO_FIELD_PRICE]
+        query = (
+            currency.update()
+            .values(last_rate=last_rate)
+            .where(currency.c.symbol == symbol)
+        )
+        await database.execute(query)
+        updated_currencies.append(
+            {
+                "iso_currency": currencies_to_update[symbol][YAHOO_FIELD_CURRENCY],
+                "last_rate": last_rate,
+            }
+        )
+    return {"currencies": updated_currencies}
+
+
+# # TODO FAB currencies update
 
 
 @router.post("/{stock_id}", response_model=UpdatedStock)
@@ -371,8 +401,6 @@ async def get_traded_stocks(
         profit_and_loss += stock["profit_and_loss"]
         current_ctv_converted += stock["current_ctv_converted"]
 
-    # TODO add converted_current_ctv field to each traded_stock
-    # and to the sum of all traded stocks, remove last_rate from response
     return {
         "stocks": traded_stocks,
         "invested": invested,

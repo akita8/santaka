@@ -30,7 +30,6 @@ accounts = sqlalchemy.Table(
         nullable=False,
     ),
     sqlalchemy.Column("bank", sqlalchemy.String, nullable=False),
-    # TODO  sqlalchemy.Column("bank_name", sqlalchemy.String, nullable=True),
     sqlalchemy.Column("account_number", sqlalchemy.String, nullable=False),
 )
 
