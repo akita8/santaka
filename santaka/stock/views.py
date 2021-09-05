@@ -19,7 +19,7 @@ from santaka.account import get_owner
 from santaka.stock.models import (
     NewStock,
     NewStockAlert,
-    Stock,
+    DetailedStock,
     StockAlert,
     StockAlerts,
     StockAlertToDelete,
@@ -42,6 +42,7 @@ from santaka.stock.models import (
 from santaka.stock.utils import (
     YAHOO_FIELD_FINANCIAL_CURRENCY,
     call_yahoo_from_view,
+    get_stock_records,
     get_yahoo_quote,
     validate_stock_transaction,
     prepare_traded_stocks,
@@ -56,15 +57,18 @@ from santaka.stock.utils import (
 router = APIRouter(prefix="/stock", tags=["stock"])
 
 
-@router.put("/", response_model=Stock)
+@router.put("/", response_model=DetailedStock)
 @database.transaction()
 async def create_stock(new_stock: NewStock, user: User = Depends(get_current_user)):
     # query the database to check if stock already exists
     stock_symbol = new_stock.symbol.upper()
     query = stocks.select().where(stocks.c.symbol == stock_symbol)
-    stock_record = await database.fetch_one(query)
+    stock_records = await get_stock_records(stock_symbol)
 
-    if stock_record is None:
+    # create response dict from body model
+    stock = new_stock.dict()
+
+    if not stock_records:
         # stock not found in the database, calling yahoo to get stock info
         stock_info = await call_yahoo_from_view(stock_symbol)
         iso_currency = stock_info[YAHOO_FIELD_CURRENCY]
@@ -109,12 +113,22 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
             financial_currency=stock_info[YAHOO_FIELD_FINANCIAL_CURRENCY],
         )
         stock_id = await database.execute(query)
+        stock["short_name"] = stock_info[YAHOO_FIELD_NAME]
+        stock["iso_currency"] = iso_currency
+        stock["currency_id"] = currency_id
+        stock["market"] = stock_info[YAHOO_FIELD_MARKET]
+        stock["symbol"] = stock_symbol
+        stock["last_price"] = stock_info[YAHOO_FIELD_PRICE]
     else:
-        # if stock record exists already just save the id
-        stock_id = stock_record.stock_id
-
-    # create response dict from body model and add stock id to it
-    stock = new_stock.dict()
+        # if stock record exists already
+        stock_record = stock_records[0]
+        stock_id = stock_record[3]
+        stock["short_name"] = stock_record[1]
+        stock["iso_currency"] = stock_record[6]
+        stock["currency_id"] = stock_record[5]
+        stock["market"] = stock_record[4]
+        stock["symbol"] = stock_symbol
+        stock["last_price"] = stock_record[0]
     stock["stock_id"] = stock_id
 
     return stock
@@ -200,18 +214,18 @@ async def update_stocks(user: User = Depends(get_current_user)):
 
 @router.get("/", response_model=Stocks)
 async def get_stocks(_: User = Depends(get_current_user)):
-    query = stocks.select()
-    records = await database.fetch_all(query)
+    records = await get_stock_records()
     stocks_entered = {"stocks": []}
-    for stock in records:
+    for record in records:
         stocks_entered["stocks"].append(
             {
-                "last_price": stock.last_price,
-                "short_name": stock.short_name,
-                "symbol": stock.symbol,
-                "stock_id": stock.stock_id,
-                "market": stock.market,
-                "currency_id": stock.currency_id,
+                "last_price": record[0],
+                "short_name": record[1],
+                "symbol": record[2],
+                "stock_id": record[3],
+                "market": record[4],
+                "currency_id": record[5],
+                "iso_currency": record[6],
             }
         )
     return stocks_entered

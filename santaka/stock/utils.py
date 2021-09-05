@@ -613,3 +613,22 @@ async def check_stock_alerts(
             }
         )
     return alerts
+
+
+async def get_stock_records(*symbols: str):
+    query = select(
+        [
+            stocks.c.last_price,
+            stocks.c.short_name,
+            stocks.c.symbol,
+            stocks.c.stock_id,
+            stocks.c.market,
+            stocks.c.currency_id,
+            currency.c.iso_currency,
+        ]
+    ).select_from(stocks.join(currency, stocks.c.currency_id == currency.c.currency_id))
+    if symbols:
+        query = query.where(
+            stocks.c.symbol.in_(symbols),
+        )
+    return await database.fetch_all(query)
