@@ -167,3 +167,7 @@ class StockAlertToUpdate(BaseModel):
 class UpdatedCurrency(BaseModel):
     iso_currency: str
     last_rate: Decimal
+
+
+class UpdatedCurrencies(BaseModel):
+    currencies: List[UpdatedCurrency]
