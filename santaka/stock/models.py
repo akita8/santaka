@@ -11,16 +11,14 @@ class NewStock(BaseModel):
     symbol: str
 
 
-class Stock(NewStock):
-    stock_id: int
-
-
 class DetailedStock(BaseModel):
     short_name: str
     symbol: str
     stock_id: int
     market: str
     last_price: Decimal
+    currency_id: int
+    iso_currency: str
 
 
 class Stocks(BaseModel):
@@ -54,7 +52,8 @@ class StockTransactionHistory(BaseModel):
     transactions: List[StockTransaction]
 
 
-class TradedStock(Stock):
+class TradedStock(NewStock):
+    stock_id: int
     market: str
     currency: str
     last_price: Decimal
