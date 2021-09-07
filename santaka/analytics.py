@@ -12,19 +12,23 @@ def calculate_profit_and_loss(
     sell_tax: Decimal,
     sell_commission: Decimal,
     quantity: int,
-    last_rate: int,
-) -> Tuple[Decimal, Decimal, Decimal, Decimal]:
+) -> Decimal:
     # TODO refactor functions spliting for ctv invested and profit and loss
     invested = quantity * fiscal_price
-    current_ctv = quantity * last_price
     sold = quantity * last_price - sell_commission - sell_tax
+    return sold - invested
+
+
+def calculate_totals(
+    fiscal_price: Decimal,
+    last_price: Decimal,
+    quantity: int,
+    last_rate: Decimal,
+) -> Tuple[Decimal, Decimal, Decimal]:
+    invested = quantity * fiscal_price
+    current_ctv = quantity * last_price
     current_ctv_converted = current_ctv / last_rate
-    return (
-        sold - invested,
-        invested,
-        current_ctv,
-        current_ctv_converted,
-    )
+    return invested, current_ctv, current_ctv_converted
 
 
 def calculate_fiscal_price(

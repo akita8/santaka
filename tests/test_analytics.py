@@ -203,7 +203,6 @@ def test_calculate_stock_fiscal_price(
         "sell_commission",
         "quantity",
         "expected_profit_and_loss",
-        "last_rate",
     ],
     [  # this is the list of test cases
         [
@@ -213,7 +212,6 @@ def test_calculate_stock_fiscal_price(
             D("8"),
             20,
             D("269.8"),
-            1,
         ],  # first test case, put adeguate parameters in this list these are
         [
             D("174.1784"),
@@ -222,7 +220,6 @@ def test_calculate_stock_fiscal_price(
             D("11"),
             5,
             D("681.046"),
-            1,
         ],
         [
             D("46.394"),
@@ -231,7 +228,6 @@ def test_calculate_stock_fiscal_price(
             D("12.95"),
             10,
             D("89.3"),
-            1,
         ],
         [
             D("342.855"),
@@ -240,7 +236,6 @@ def test_calculate_stock_fiscal_price(
             D("12"),
             2,
             D("31.87"),
-            1,
         ],
     ],
 )
@@ -251,7 +246,7 @@ def test_calculate_profit_and_loss(
     sell_commission,
     quantity,
     expected_profit_and_loss,
-    last_rate,
+    # last_rate,
 ):
     # To implement the test import the function you want to test
     # then call the function with the correct parameters
@@ -263,7 +258,6 @@ def test_calculate_profit_and_loss(
         sell_tax,
         sell_commission,
         quantity,
-        last_rate,
     )
     assert approx(result, D("0.01")) == expected_profit_and_loss
 

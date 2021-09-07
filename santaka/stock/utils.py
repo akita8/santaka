@@ -11,7 +11,11 @@ from pytz import timezone, utc
 from sqlalchemy import asc
 from sqlalchemy.sql import select
 
-from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
+from santaka.analytics import (
+    calculate_fiscal_price,
+    calculate_profit_and_loss,
+    calculate_totals,
+)
 from santaka.stock.models import (
     AlertFields,
     NewStockTransaction,
@@ -418,20 +422,19 @@ def prepare_traded_stocks(
                     previous_record[4],
                     current_quantity,  # total qty of all transactions of one stock_id
                 )
-                (
-                    profit_and_loss,
-                    invested,
-                    current_ctv,
-                    current_ctv_converted,
-                ) = calculate_profit_and_loss(
+                profit_and_loss = calculate_profit_and_loss(
                     fiscal_price,
-                    previous_record[4],
+                    previous_record[4],  # last_price
                     sell_tax,
-                    commission,
+                    commission,  # sell_commission
                     current_quantity,
-                    previous_record[2],
                 )
-
+                invested, current_ctv, current_ctv_converted = calculate_totals(
+                    fiscal_price,
+                    previous_record[4],  # last_price
+                    current_quantity,
+                    previous_record[2],  # last_rate)
+                )
             traded_stocks.append(
                 {
                     "stock_id": previous_record[0],
@@ -449,7 +452,6 @@ def prepare_traded_stocks(
                     "short_name": previous_record[15],
                 }
             )
-
             # here we are resetting the tax and qty to zero
             # and transactions to empty list for the next group of transactions
             current_quantity = 0
@@ -544,7 +546,8 @@ def check_profit_and_loss_lower_limit(limit: Decimal, profit_and_loss: Decimal) 
 
 
 async def check_stock_alerts(
-    stock_id: Optional[int] = None, owner_id: Optional[int] = None
+    stock_id: Optional[int] = None,
+    owner_id: Optional[int] = None,
 ) -> List[StockAlert]:
     query = stock_alerts.select()
     if stock_id is not None:

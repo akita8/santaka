@@ -40,6 +40,7 @@ from santaka.stock.utils import (
                     Bank.FINECOBANK.value,
                     1,
                     "USD",
+                    "mondalez",
                 ),
             ],
             [
@@ -67,6 +68,7 @@ from santaka.stock.utils import (
                     Bank.FINECOBANK.value,
                     1,
                     "EURO",
+                    "leonardo",
                 ),
             ],
             [
@@ -94,6 +96,7 @@ from santaka.stock.utils import (
                     Bank.CHE_BANCA.value,
                     1,
                     "USD",
+                    "lockeed martin",
                 ),
             ],
             [

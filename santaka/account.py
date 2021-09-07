@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from enum import Enum
 
 from fastapi import Depends, APIRouter, HTTPException, status
@@ -20,6 +20,11 @@ router = APIRouter(prefix="/account", tags=["account"])
 class Owner(BaseModel):
     name: str
     owner_id: int
+
+
+class OwnerDetails(Owner):
+    bank_name = str
+    account_number: str
 
 
 class Bank(str, Enum):
@@ -53,7 +58,7 @@ class Accounts(BaseModel):
     accounts: List[Account]
 
 
-async def get_owner(user_id: int, owner_id: int):
+async def get_owner(user_id: int, owner_id: int) -> Tuple[int, str, str, int, str]:
     # this query also checks that the owner exists
     # and that it's linked to one of the users accounts
     query = (
@@ -150,3 +155,15 @@ async def get_accounts(user: User = Depends(get_current_user)):
         previous_account_id = record[1]
 
     return {"accounts": account_models}
+
+
+@router.get("/owner/{owner_id}", response_model=OwnerDetails)
+async def get_owners_detail(owner_id: int, user: User = Depends(get_current_user)):
+    owner = await get_owner(user.user_id, owner_id)
+    bank_name = BANK_NAMES[owner[1]]
+    return {
+        "owner_id": owner_id,
+        "name": owner[4],
+        "bank_name": bank_name,
+        "account_number": owner[2],
+    }
