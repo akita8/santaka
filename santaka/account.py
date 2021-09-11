@@ -23,7 +23,7 @@ class Owner(BaseModel):
 
 
 class OwnerDetails(Owner):
-    bank_name = str
+    bank_name: str
     account_number: str
 
 
