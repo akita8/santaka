@@ -32,6 +32,7 @@ class Bank(str, Enum):
     BG_SAXO = "bg_saxo"
     BANCA_GENERALI = "banca_generali"
     CHE_BANCA = "che_banca"
+    IWBANK = "iwbank"
 
 
 BANK_NAMES = {
@@ -39,6 +40,7 @@ BANK_NAMES = {
     Bank.BG_SAXO.value: "BG-Saxo",
     Bank.BANCA_GENERALI.value: "Banca Generali",
     Bank.CHE_BANCA.value: "Che Banca",
+    Bank.IWBANK.value: "IwBank",
 }
 
 
@@ -46,12 +48,12 @@ class NewAccount(BaseModel):
     owners: conlist(str, min_items=1)
     bank: Bank
     account_number: str
-    bank_name: str
 
 
 class Account(NewAccount):
     account_id: int
     owners: List[Owner]
+    bank_name: str
 
 
 class Accounts(BaseModel):
@@ -111,6 +113,8 @@ async def create_account(
     account = new_account.dict()
     account["account_id"] = account_id
     account["owners"] = new_owners
+    account["bank_name"] = BANK_NAMES[new_account.bank]
+
     return account
 
 

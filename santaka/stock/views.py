@@ -182,9 +182,6 @@ async def update_currencies(user: User = Depends(get_current_user)):
     return {"currencies": updated_currencies}
 
 
-# # TODO FAB currencies update
-
-
 @router.post("/{stock_id}", response_model=UpdatedStock)
 @database.transaction()
 async def update_stock_quote(stock_id: int, user: User = Depends(get_current_user)):
@@ -397,6 +394,12 @@ async def get_stock_transaction_history(
             }
         )
     return history
+
+
+# TODO Fabio add new view to get traded summary for a single stock
+# url should be traded/{owner_id}/stock/{stock_id}/
+# you have to call get_transaction_records with the parameters owner ids  and stock id
+# than prepare_traded_stocks and than return the only traded stock prepared
 
 
 @router.get(
