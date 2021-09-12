@@ -341,6 +341,9 @@ async def create_stock_transaction(
     # fetch_all returns a list of records that match the query
     records = await database.fetch_all(query)
     validate_stock_transaction(records, new_stock_transaction)
+    exchange_rate = 1
+    if new_stock_transaction.transaction_ex_rate is not None:
+        exchange_rate = new_stock_transaction.transaction_ex_rate
     query = stock_transactions.insert().values(
         stock_transaction_id=create_random_id(),
         stock_id=new_stock_transaction.stock_id,
@@ -352,6 +355,7 @@ async def create_stock_transaction(
         date=new_stock_transaction.date,
         owner_id=owner_id,
         transaction_note=new_stock_transaction.transaction_note,
+        transaction_ex_rate=exchange_rate,
     )
     stock_transaction_id = await database.execute(query)
     stock_transaction = new_stock_transaction.dict()
@@ -389,6 +393,7 @@ async def get_stock_transaction_history(
                 "stock_id": stock_id,
                 "stock_transaction_id": transaction.stock_transaction_id,
                 "transaction_note": transaction.transaction_note,
+                "transaction_ex_rate": transaction.transaction_ex_rate,  # eee
             }
         )
     return history

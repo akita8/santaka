@@ -38,6 +38,7 @@ class Transaction(BaseModel):
     date: datetime
     transaction_type: TransactionType
     transaction_note: Optional[str] = None
+    transaction_ex_rate: Optional[Decimal] = None
 
 
 class NewStockTransaction(Transaction):
@@ -100,6 +101,8 @@ class StockTransactionToUpdate(BaseModel):
     tax: Optional[Decimal] = None
     commission: Optional[Decimal] = None
     date: Optional[datetime] = None
+    transaction_note: Optional[str] = None
+    transaction_ex_rate: Optional[Decimal] = None  # eee
 
 
 class StockTransactionsToMove(BaseModel):

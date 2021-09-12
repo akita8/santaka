@@ -27,6 +27,7 @@ class FakeRecord:
         transaction_note,
         stock_id,
         price,
+        transaction_ex_rate,
     ):
         self.transaction_type = transaction_type
         self.quantity = quantity
@@ -34,6 +35,7 @@ class FakeRecord:
         self.commission = commission
         self.date = date
         self.transaction_note = transaction_note
+        self.transaction_ex_rate = transaction_ex_rate
         self.stock_id = stock_id
         self.price = price
 
@@ -55,7 +57,7 @@ def test_first_transaction_not_buy():
 def test_total_quantity_greater_than_sell():
     with raises(HTTPException):
         validate_stock_transaction(
-            [FakeRecord(TransactionType.buy, 1, 1, 1, datetime.today(), "", 1, 1)],
+            [FakeRecord(TransactionType.buy, 1, 1, 1, datetime.today(), "", 1, 1, 1)],
             NewStockTransaction(
                 price=1,
                 quantity=2,
