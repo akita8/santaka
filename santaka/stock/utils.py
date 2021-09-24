@@ -164,7 +164,7 @@ def validate_stock_transaction(records, transaction: NewStockTransaction):
             and record.date.month == transaction.date.month
             and record.date.day == transaction.date.day
             and record.transaction_note == transaction.transaction_note
-            and record.transaction_ex_rate == transaction.transaction_ex_rate  # eee
+            and record.transaction_ex_rate == transaction.transaction_ex_rate
         ):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

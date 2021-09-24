@@ -31,6 +31,7 @@ from santaka.stock.models import (
     StockTransactionHistory,
     StockTransactionsToMove,
     Stocks,
+    TradedStock,
     TradedStocks,
     StockTransactionToDelete,
     StockTransactionToUpdate,
@@ -390,16 +391,20 @@ async def get_stock_transaction_history(
                 "stock_id": stock_id,
                 "stock_transaction_id": transaction.stock_transaction_id,
                 "transaction_note": transaction.transaction_note,
-                "transaction_ex_rate": transaction.transaction_ex_rate,  # eee
+                "transaction_ex_rate": transaction.transaction_ex_rate,
             }
         )
     return history
 
 
-# TODO Fabio add new view to get traded summary for a single stock
-# url should be traded/{owner_id}/stock/{stock_id}/
-# you have to call get_transaction_records with the parameters owner ids  and stock id
-# than prepare_traded_stocks and than return the only traded stock prepared
+@router.get("/traded/{owner_id}/stock/{stock_id}/", response_model=TradedStock)
+async def get_traded_stock_summary(
+    owner_id: int, stock_id: int, user: User = Depends(get_current_user)
+):
+    await get_owner(user.user_id, owner_id)
+    records = await get_transaction_records([owner_id], stock_id)
+    traded_stocks = prepare_traded_stocks(records)
+    return traded_stocks[0]
 
 
 @router.get(
@@ -410,9 +415,8 @@ async def get_traded_stocks(
     owner_id: int,
     user: User = Depends(get_current_user),
 ):
-    # FIXME invested and profit_and_loss totals do not make sense
-    # as they are calculated now
-    # they need to take account of exchange rates.
+    # FIXME invested and profit_and_loss totals do not make sense as they are
+    # calculated now, they need to take account of exchange rates.
     #  Current_ctv is just wrong and needs to be removed
     await get_owner(user.user_id, owner_id)
     records = await get_transaction_records([owner_id])

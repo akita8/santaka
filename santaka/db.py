@@ -105,7 +105,7 @@ stock_transactions = sqlalchemy.Table(
     sqlalchemy.Column("date", sqlalchemy.DateTime, nullable=False),
     sqlalchemy.Column("transaction_type", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("transaction_note", sqlalchemy.String, nullable=True),
-    sqlalchemy.Column("transaction_ex_rate", sqlalchemy.DECIMAL, nullable=False),  # eee
+    sqlalchemy.Column("transaction_ex_rate", sqlalchemy.DECIMAL, nullable=False),
 )
 stock_alerts = sqlalchemy.Table(
     "stock_alerts",

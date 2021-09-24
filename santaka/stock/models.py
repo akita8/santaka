@@ -102,7 +102,7 @@ class StockTransactionToUpdate(BaseModel):
     commission: Optional[Decimal] = None
     date: Optional[datetime] = None
     transaction_note: Optional[str] = None
-    transaction_ex_rate: Optional[Decimal] = None  # eee
+    transaction_ex_rate: Optional[Decimal] = None
 
 
 class StockTransactionsToMove(BaseModel):
