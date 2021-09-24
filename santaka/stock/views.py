@@ -397,7 +397,7 @@ async def get_stock_transaction_history(
     return history
 
 
-@router.get("/traded/{owner_id}/stock/{stock_id}/", response_model=TradedStock)
+@router.get("/traded/{owner_id}/{stock_id}/", response_model=TradedStock)
 async def get_traded_stock_summary(
     owner_id: int, stock_id: int, user: User = Depends(get_current_user)
 ):
