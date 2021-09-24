@@ -56,7 +56,7 @@ class StockTransactionHistory(BaseModel):
 class TradedStock(NewStock):
     stock_id: int
     market: str
-    currency: str
+    iso_currency: str
     last_price: Decimal
     current_ctv_converted: Decimal
     fiscal_price: Decimal

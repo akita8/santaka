@@ -439,7 +439,7 @@ def prepare_traded_stocks(
             traded_stocks.append(
                 {
                     "stock_id": previous_record[0],
-                    "currency": previous_record[1],
+                    "iso_currency": previous_record[1],
                     "symbol": previous_record[3],
                     "last_price": previous_record[4],
                     "market": previous_record[5],
