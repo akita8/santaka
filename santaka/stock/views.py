@@ -403,6 +403,11 @@ async def get_traded_stock_summary(
 ):
     await get_owner(user.user_id, owner_id)
     records = await get_transaction_records([owner_id], stock_id)
+    if len(records) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Stock id {stock_id} doesn't exist for this owner",
+        )
     traded_stocks = prepare_traded_stocks(records)
     return traded_stocks[0]
 
