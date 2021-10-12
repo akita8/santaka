@@ -1,8 +1,6 @@
 from decimal import Decimal
 from typing import List, Optional, Tuple
 
-# from datetime import datetime, timedelta
-
 from santaka.stock.models import Transaction, TransactionType, SplitEvent
 
 
@@ -13,7 +11,6 @@ def calculate_profit_and_loss(
     sell_commission: Decimal,
     quantity: int,
 ) -> Decimal:
-    # TODO refactor functions spliting for ctv invested and profit and loss
     invested = quantity * fiscal_price
     sold = quantity * last_price - sell_commission - sell_tax
     return sold - invested
@@ -33,8 +30,9 @@ def calculate_totals(
 
 def calculate_fiscal_price(
     transactions: List[Transaction], split_events: Optional[List[SplitEvent]] = None
-) -> Decimal:
+) -> Tuple[Decimal, Decimal]:
     invested = 0
+    invested_converted = 0
     quantity = 0
     split_index = 0
     for transaction in transactions:
@@ -50,14 +48,20 @@ def calculate_fiscal_price(
             invested = invested + (
                 transaction.price * transaction.quantity + transaction.commission
             )
+            invested_converted = (
+                invested_converted
+                + (transaction.price * transaction.quantity + transaction.commission)
+                / transaction.transaction_ex_rate
+            )
         elif transaction.transaction_type == TransactionType.sell:
             new_quantity = quantity - transaction.quantity
             invested = (invested / quantity) * new_quantity
+            invested_converted = (invested_converted / quantity) * new_quantity
             quantity = new_quantity
     while split_events and split_index < len(split_events):
         quantity = split_events[split_index].factor * quantity
         split_index += 1
-    return invested / quantity
+    return invested / quantity, invested_converted / quantity
 
 
 # class AlertService(santaka_grpc.AlertService):

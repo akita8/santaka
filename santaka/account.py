@@ -3,7 +3,7 @@ from enum import Enum
 
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.sql import select
-from pydantic import BaseModel, conlist
+from pydantic import BaseModel
 
 from santaka.db import (
     database,
@@ -20,6 +20,11 @@ router = APIRouter(prefix="/account", tags=["account"])
 class Owner(BaseModel):
     name: str
     owner_id: int
+
+
+class NewOwner(BaseModel):
+    account_id: int
+    name: str
 
 
 class OwnerDetails(Owner):
@@ -45,7 +50,6 @@ BANK_NAMES = {
 
 
 class NewAccount(BaseModel):
-    owners: conlist(str, min_items=1)
     bank: Bank
     account_number: str
 
@@ -88,12 +92,35 @@ async def get_owner(user_id: int, owner_id: int) -> Tuple[int, str, str, int, st
     return record
 
 
-@router.post("/", response_model=Account)
+@router.put("/owner/", response_model=Owner)
+@database.transaction()
+async def create_owner(new_owner: NewOwner, user: User = Depends(get_current_user)):
+    query = (
+        accounts.select()
+        .where(accounts.c.user_id == user.user_id)
+        .where(accounts.c.account_id == new_owner.account_id)
+    )
+    record = await database.fetch_one(query)
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Account {new_owner.account_id} doesn't exist",
+        )
+    query = owners.insert().values(
+        owner_id=create_random_id(),
+        account_id=new_owner.account_id,
+        fullname=new_owner.name,
+    )
+    owner_id = await database.execute(query)
+
+    return {"name": new_owner.name, "owner_id": owner_id}
+
+
+@router.put("/", response_model=Account)
 @database.transaction()
 async def create_account(
     new_account: NewAccount, user: User = Depends(get_current_user)
 ):
-    # TODO refactor by splitting in two views account creation and owner creation
     query = accounts.insert().values(
         account_id=create_random_id(),
         account_number=new_account.account_number,
@@ -101,20 +128,11 @@ async def create_account(
         user_id=user.user_id,
     )
     account_id = await database.execute(query)
-    new_owners = []
-    for owner in new_account.owners:
-        query = owners.insert().values(
-            owner_id=create_random_id(),
-            account_id=account_id,
-            fullname=owner,
-        )
-        owner_id = await database.execute(query)
-        new_owners.append({"owner_id": owner_id, "name": owner})
+
     account = new_account.dict()
     account["account_id"] = account_id
-    account["owners"] = new_owners
     account["bank_name"] = BANK_NAMES[new_account.bank]
-
+    account["owners"] = []
     return account
 
 
@@ -131,7 +149,7 @@ async def get_accounts(user: User = Depends(get_current_user)):
             ]
         )
         .select_from(
-            users.join(accounts, users.c.user_id == accounts.c.user_id).join(
+            users.join(accounts, users.c.user_id == accounts.c.user_id).outerjoin(
                 owners, accounts.c.account_id == owners.c.account_id
             ),
         )
@@ -143,12 +161,15 @@ async def get_accounts(user: User = Depends(get_current_user)):
     for record in records:
         if record[1] != previous_account_id:
             bank_name = BANK_NAMES[record[0]]
+            owners_ = []
+            if record[4] is not None:
+                owners_ = [{"name": record[3], "owner_id": record[4]}]
             account_models.append(
                 {
                     "bank": record[0],
                     "account_number": record[2],
                     "account_id": record[1],
-                    "owners": [{"name": record[3], "owner_id": record[4]}],
+                    "owners": owners_,
                     "bank_name": bank_name,
                 }
             )

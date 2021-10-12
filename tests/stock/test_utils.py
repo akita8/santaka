@@ -41,6 +41,7 @@ from santaka.stock.utils import (
                     1,
                     "USD",
                     "mondalez",
+                    1,
                 ),
             ],
             [
@@ -69,6 +70,7 @@ from santaka.stock.utils import (
                     1,
                     "EURO",
                     "leonardo",
+                    1,
                 ),
             ],
             [
@@ -97,6 +99,7 @@ from santaka.stock.utils import (
                     1,
                     "USD",
                     "lockeed martin",
+                    1,
                 ),
             ],
             [

@@ -77,99 +77,112 @@ from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
 
 
 @mark.parametrize(
-    "transactions,split_events,expected_fiscal_price",
+    "transactions,split_events,expected_fiscal_price,expected_fiscal_price_converted",
     (
         (
             (
-                (TransactionType.buy, 5, D("108.62"), D("11.97"), 0),
-                (TransactionType.sell, 2, D("277"), D("12.13"), 0),
-                (TransactionType.buy, 2, D("262.94"), D("11.97"), 0),
+                (TransactionType.buy, 5, D("108.62"), D("11.97"), 0, D("1.08623")),
+                (TransactionType.sell, 2, D("277"), D("12.13"), 0, D("1.10212")),
+                (TransactionType.buy, 2, D("262.94"), D("11.97"), 0, D("1.0876")),
             ),
             [],
             D("174.1784"),
+            D("160.144"),  # UNH stock and BG_Saxo account
         ),
         (
             (
-                (TransactionType.buy, 50, D("31.65"), D("15.19"), 0),
-                (TransactionType.buy, 30, D("46.71"), D("16.76"), 0),
-                (TransactionType.buy, 20, D("51.78"), D("15.98"), 0),
-                (TransactionType.buy, 20, D("50.00"), D("17.08"), 0),
-                (TransactionType.buy, 20, D("40.30"), D("17.09"), 0),
+                (TransactionType.buy, 50, D("31.65"), D("15.19"), 0, D("1.38112")),
+                (TransactionType.buy, 30, D("46.71"), D("16.76"), 0, D("1.52219")),
+                (TransactionType.buy, 20, D("51.78"), D("15.98"), 0, D("1.45164")),
+                (TransactionType.buy, 20, D("50.00"), D("17.08"), 0, D("1.55304")),
+                (TransactionType.buy, 20, D("40.30"), D("17.09"), 0, D("1.5474")),
             ),
             [],
             D("42.196"),
+            D("28.5604"),  # CAR-UN.TO stock and BG_Saxo account
         ),
         (
             (
-                (TransactionType.buy, 500, D("3.994"), D("8"), 0),
-                (TransactionType.buy, 500, D("3.6"), D("8"), 0),
-                (TransactionType.sell, 900, D("4.58"), D("0"), 0),
-                (TransactionType.sell, 100, D("4.579"), D("8"), 0),
-                (TransactionType.buy, 1000, D("4.4"), D("8"), 0),
-                (TransactionType.sell, 500, D("4.84"), D("8"), 0),
-                (TransactionType.sell, 500, D("4.887"), D("8"), 0),
-                (TransactionType.buy, 700, D("4.073"), D("8"), 0),
-                (TransactionType.sell, 700, D("4.77"), D("8"), 0),
-                (TransactionType.buy, 200, D("4.33"), D("8"), 0),
-                (TransactionType.buy, 500, D("4.26"), D("8"), 0),
+                (TransactionType.buy, 500, D("3.994"), D("8"), 0, 1),
+                (TransactionType.buy, 500, D("3.6"), D("8"), 0, 1),
+                (TransactionType.sell, 900, D("4.58"), D("0"), 0, 1),
+                (TransactionType.sell, 100, D("4.579"), D("8"), 0, 1),
+                (TransactionType.buy, 1000, D("4.4"), D("8"), 0, 1),
+                (TransactionType.sell, 500, D("4.84"), D("8"), 0, 1),
+                (TransactionType.sell, 500, D("4.887"), D("8"), 0, 1),
+                (TransactionType.buy, 700, D("4.073"), D("8"), 0, 1),
+                (TransactionType.sell, 700, D("4.77"), D("8"), 0, 1),
+                (TransactionType.buy, 200, D("4.33"), D("8"), 0, 1),
+                (TransactionType.buy, 500, D("4.26"), D("8"), 0, 1),
             ),
             [],
             D("4.3029"),
+            D("4.3029"),  # SRG.MI stock and BG617 account
         ),
         (
             (
-                (TransactionType.buy, 3, D("151.1799"), D("12.5"), 0),
-                (TransactionType.buy, 2, D("296.981"), D("11.99"), 0),
-            ),
-            [],
-            D("214.3983"),
-        ),
-        (
-            (
-                (TransactionType.buy, 3, D("151.1799"), D("12.5"), 1546036022),
-                (TransactionType.buy, 2, D("296.981"), D("11.99"), 1582928822),
+                (
+                    TransactionType.buy,
+                    3,
+                    D("151.1799"),
+                    D("12.5"),
+                    1546036022,
+                    D("1.13477"),
+                ),
+                (
+                    TransactionType.buy,
+                    2,
+                    D("296.981"),
+                    D("11.99"),
+                    1582928822,
+                    D("1.0876"),
+                ),
             ),
             [(1598826422, 4)],
             D("53.598"),
+            D("48.339"),  # AAPL stock and BG_Saxo account
         ),
         (
             (
-                (TransactionType.buy, 3, D("151.1799"), D("12.5"), 1546036022),
-                (TransactionType.buy, 2, D("296.981"), D("11.99"), 1582928822),
-                (TransactionType.buy, 5, D("132.000"), D("11.99"), 1612202877),
+                (TransactionType.buy, 3, D("151.1799"), D("12.5"), 1546036022, 1),
+                (TransactionType.buy, 2, D("296.981"), D("11.99"), 1582928822, 1),
+                (TransactionType.buy, 5, D("132.000"), D("11.99"), 1612202877, 1),
             ),
             [(1598826422, 4)],
+            D("69.7585"),
             D("69.7585"),
         ),
         (
             (
-                (TransactionType.buy, 2000, D("99.93"), 0, 0),
-                (TransactionType.buy, 1000, D("99.53"), 0, 0),
-                (TransactionType.buy, 1000, D("99.98"), 0, 0),
+                (TransactionType.buy, 2000, D("99.93"), 0, 0, 1),
+                (TransactionType.buy, 1000, D("99.53"), 0, 0, 1),
+                (TransactionType.buy, 1000, D("99.98"), 0, 0, 1),
             ),
             None,
+            D("99.8425"),
             D("99.8425"),
         ),
         (
             (
-                (TransactionType.buy, 1000, D("95.76"), 0, 0),
-                (TransactionType.buy, 1000, D("93.76"), 0, 0),
-                (TransactionType.buy, 2000, D("99.94"), 0, 0),
-                (TransactionType.buy, 2000, D("99.27"), 0, 0),
-                (TransactionType.sell, 1000, D("91.09"), 0, 0),
-                (TransactionType.sell, 1000, D("92.89"), 0, 0),
-                (TransactionType.sell, 1000, D("93.92"), 0, 0),
-                (TransactionType.buy, 1000, D("89.37"), 0, 0),
-                (TransactionType.sell, 1000, D("81.95"), 0, 0),
-                (TransactionType.sell, 1000, D("100.02"), 0, 0),
+                (TransactionType.buy, 1000, D("95.76"), 0, 0, 1),
+                (TransactionType.buy, 1000, D("93.76"), 0, 0, 1),
+                (TransactionType.buy, 2000, D("99.94"), 0, 0, 1),
+                (TransactionType.buy, 2000, D("99.27"), 0, 0, 1),
+                (TransactionType.sell, 1000, D("91.09"), 0, 0, 1),
+                (TransactionType.sell, 1000, D("92.89"), 0, 0, 1),
+                (TransactionType.sell, 1000, D("93.92"), 0, 0, 1),
+                (TransactionType.buy, 1000, D("89.37"), 0, 0, 1),
+                (TransactionType.sell, 1000, D("81.95"), 0, 0, 1),
+                (TransactionType.sell, 1000, D("100.02"), 0, 0, 1),
             ),
             None,
+            D("95.835"),
             D("95.835"),
         ),
     ),
 )
 def test_calculate_stock_fiscal_price(
-    transactions, split_events, expected_fiscal_price
+    transactions, split_events, expected_fiscal_price, expected_fiscal_price_converted
 ):
     transaction_dicts = []
     for transaction in transactions:
@@ -180,6 +193,7 @@ def test_calculate_stock_fiscal_price(
                 price=transaction[2],
                 commission=transaction[3],
                 date=datetime.fromtimestamp(transaction[4]),
+                transaction_ex_rate=transaction[5],
             )
         )
     split_events_dicts = None
@@ -189,8 +203,11 @@ def test_calculate_stock_fiscal_price(
             split_events_dicts.append(
                 SplitEvent(date=datetime.fromtimestamp(event[0]), factor=event[1])
             )
-    response = calculate_fiscal_price(transaction_dicts, split_events_dicts)
-    assert approx(response, D("0.01")) == expected_fiscal_price
+    fiscal_price, fiscal_price_converted = calculate_fiscal_price(
+        transaction_dicts, split_events_dicts
+    )
+    assert approx(fiscal_price, D("0.01")) == expected_fiscal_price
+    assert approx(fiscal_price_converted, D("0.01")) == expected_fiscal_price_converted
 
 
 @mark.parametrize(

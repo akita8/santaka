@@ -651,7 +651,4 @@ async def update_stock_alert(
 
 # TODO Refactor create stock dividing in in different views:
 #      one to get stock (from db or yahoo), one to create stock,
-#      one to get currency, one to create currency
-
-
-# TODO Refactor create_account separating accounts and owners
+#      one to get currency, one to create currencys

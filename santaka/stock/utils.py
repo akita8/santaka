@@ -93,6 +93,7 @@ TransactionRecords = Tuple[
     int,  # owner_id 13
     str,  # financial_currency 14
     str,  # short_name 15
+    Decimal,  # transaction_ex_rate 16
 ]
 
 
@@ -189,69 +190,75 @@ def calculate_commission(
     bank: str, market: str, price: Decimal, quantity: int, financial_currency: str
 ) -> Decimal:
     invested = price * quantity
+    commission = Decimal("0")
     if bank == Bank.FINECOBANK.value:
         fineco_commission = invested * Decimal("0.0019")
         if market == YahooMarket.ITALY.value or market == YahooMarket.EU.value:
             if fineco_commission <= Decimal("2.95"):
-                return Decimal("2.95")
-            if fineco_commission > Decimal("19"):
-                return Decimal("19")
-            return fineco_commission
-        if (
+                commission = Decimal("2.95")
+            elif fineco_commission > Decimal("19"):
+                commission = Decimal("19")
+            else:
+                commission = fineco_commission
+        elif (
             market == YahooMarket.USA_NYSE.value
             or market == YahooMarket.USA_NASDAQ.value
         ):
-            return Decimal("12.95")
-        if market == YahooMarket.UK.value:
-            return Decimal("14.95") + invested * Decimal("0.005")
-    if bank == Bank.BG_SAXO.value:
+            commission = Decimal("12.95")
+        elif market == YahooMarket.UK.value:
+            commission = Decimal("14.95") + invested * Decimal("0.005")
+    elif bank == Bank.BG_SAXO.value:
         bg_saxo_commission = invested * Decimal("0.0017")
         if market == YahooMarket.ITALY.value:
             if bg_saxo_commission <= Decimal("2.5"):
-                return Decimal("2.5")
-            if bg_saxo_commission >= Decimal("17.5"):
-                return Decimal("17.5")
-            return bg_saxo_commission
-        if (
+                commission = Decimal("2.5")
+            elif bg_saxo_commission >= Decimal("17.5"):
+                commission = Decimal("17.5")
+            else:
+                commission = bg_saxo_commission
+        elif (
             market == YahooMarket.USA_NYSE.value
             or market == YahooMarket.USA_NASDAQ.value
         ):
-            return Decimal("11")
-        if market == YahooMarket.EU.value:
-            return Decimal("11")
-        if market == YahooMarket.UK.value:
-            return Decimal("11") + invested * Decimal("0.005")
-        if market == YahooMarket.CANADA.value:
-            return Decimal("11") + invested * Decimal("0.005")
-    if bank == Bank.BANCA_GENERALI.value and market == YahooMarket.ITALY.value:
+            commission = Decimal("11")
+        elif market == YahooMarket.EU.value:
+            commission = Decimal("11")
+        elif market == YahooMarket.UK.value:
+            commission = Decimal("11") + invested * Decimal("0.005")
+        elif market == YahooMarket.CANADA.value:
+            commission = Decimal("11") + invested * Decimal("0.005")
+    elif bank == Bank.BANCA_GENERALI.value and market == YahooMarket.ITALY.value:
         banca_generali_commission = invested * Decimal("0.0015")
         if banca_generali_commission <= Decimal("8.00"):
-            return Decimal("8.00")
-        if banca_generali_commission > Decimal("20"):
-            return Decimal("20")
-        return banca_generali_commission
-    if bank == Bank.CHE_BANCA.value:
+            commission = Decimal("8.00")
+        elif banca_generali_commission > Decimal("20"):
+            commission = Decimal("20")
+        else:
+            commission = banca_generali_commission
+    elif bank == Bank.CHE_BANCA.value:
         che_banca_commission = invested * Decimal("0.0018")
         if market == YahooMarket.ITALY.value and financial_currency == "USD":
-            return Decimal("12")
-        if market == YahooMarket.ITALY.value:
+            commission = Decimal("12")
+        elif market == YahooMarket.ITALY.value:
             if che_banca_commission <= Decimal("6"):
-                return Decimal("6")
-            if che_banca_commission >= Decimal("25"):
-                return Decimal("25")
-            return che_banca_commission
-        if market == YahooMarket.EU.value:
+                commission = Decimal("6")
+            elif che_banca_commission >= Decimal("25"):
+                commission = Decimal("25")
+            else:
+                commission = che_banca_commission
+        elif market == YahooMarket.EU.value:
             if che_banca_commission <= Decimal("12"):
-                return Decimal("12")
-            if che_banca_commission >= Decimal("35"):
-                return Decimal("35")
-            return che_banca_commission
-        if (
+                commission = Decimal("12")
+            elif che_banca_commission >= Decimal("35"):
+                commission = Decimal("35")
+            else:
+                commission = che_banca_commission
+        elif (
             market == YahooMarket.USA_NYSE.value
             or market == YahooMarket.USA_NASDAQ.value
         ):
-            return Decimal("12")
-    return Decimal("0")
+            commission = Decimal("12")
+    return commission
 
 
 def calculate_sell_tax(
@@ -403,46 +410,67 @@ def prepare_traded_stocks(
         if previous_stock_id != record[0]:
             previous_stock_id = record[0]
             previous_record = transaction_records[i - 1]
+            bank = previous_record[12]
+            market = previous_record[5]
+            last_price = previous_record[4]
+            financial_currency = previous_record[14]
+            last_rate = previous_record[2]
+            last_price_converted = last_price / last_rate
             fiscal_price = 0
+            fiscal_price_converted = 0
             profit_and_loss = 0
             invested = 0
             current_ctv = 0
             current_ctv_converted = 0
+            profit_and_loss_converted = 0
             if current_quantity > 0:  # FIXME use fiscal price split aware quantity
-                fiscal_price = calculate_fiscal_price(current_transactions)
-                commission = calculate_commission(
-                    previous_record[12],
-                    previous_record[5],
-                    previous_record[4],
-                    current_quantity,
-                    previous_record[14],
+                fiscal_price, fiscal_price_converted = calculate_fiscal_price(
+                    current_transactions
                 )
+                commission = calculate_commission(
+                    bank,
+                    market,
+                    last_price,
+                    current_quantity,
+                    financial_currency,
+                )
+                commission_converted = commission / last_rate
                 sell_tax = calculate_sell_tax(
-                    previous_record[5],
+                    market,
                     fiscal_price,
-                    previous_record[4],
-                    current_quantity,  # total qty of all transactions of one stock_id
+                    last_price,
+                    current_quantity,
+                )
+                sell_tax_converted = calculate_sell_tax(
+                    market,
+                    fiscal_price_converted,
+                    last_price_converted,
+                    current_quantity,
                 )
                 profit_and_loss = calculate_profit_and_loss(
                     fiscal_price,
-                    previous_record[4],  # last_price
+                    last_price,
                     sell_tax,
-                    commission,  # sell_commission
+                    commission,
+                    current_quantity,
+                )
+                profit_and_loss_converted = calculate_profit_and_loss(
+                    fiscal_price_converted,
+                    last_price_converted,
+                    sell_tax_converted,
+                    commission_converted,
                     current_quantity,
                 )
                 invested, current_ctv, current_ctv_converted = calculate_totals(
-                    fiscal_price,
-                    previous_record[4],  # last_price
-                    current_quantity,
-                    previous_record[2],  # last_rate)
+                    fiscal_price, last_price, current_quantity, last_rate
                 )
             traded_stocks.append(
                 {
                     "stock_id": previous_record[0],
                     "iso_currency": previous_record[1],
                     "symbol": previous_record[3],
-                    "last_price": previous_record[4],
-                    "market": previous_record[5],
+                    "last_price": last_price,
+                    "market": market,
                     "fiscal_price": fiscal_price,
                     "profit_and_loss": profit_and_loss,
                     "owner_id": previous_record[13],
@@ -451,6 +479,8 @@ def prepare_traded_stocks(
                     "current_ctv": current_ctv,
                     "current_ctv_converted": current_ctv_converted,
                     "short_name": previous_record[15],
+                    "fiscal_price_converted": fiscal_price_converted,
+                    "profit_and_loss_converted": profit_and_loss_converted,
                 }
             )
             # here we are resetting the tax and qty to zero
@@ -465,6 +495,7 @@ def prepare_traded_stocks(
                     price=record[8],
                     commission=record[9],
                     date=record[10],
+                    transaction_ex_rate=record[16],
                 )
             )
             if record[6] == TransactionType.buy.value:
@@ -497,6 +528,7 @@ async def get_transaction_records(
                 owners.c.owner_id,
                 stocks.c.financial_currency,
                 stocks.c.short_name,
+                stock_transactions.c.transaction_ex_rate,
             ]
         )
         .select_from(

@@ -66,6 +66,8 @@ class TradedStock(NewStock):
     invested: Decimal
     current_ctv: Decimal
     short_name: str
+    fiscal_price_converted: Decimal
+    profit_and_loss_converted: Decimal
 
 
 class TradedStocks(BaseModel):
