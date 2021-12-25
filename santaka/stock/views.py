@@ -568,12 +568,24 @@ async def create_stock_alert(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="At least one field must be present",
         )
-    query = stocks.select().where(stocks.c.stock_id == new_stock_alert.stock_id)
+
+    query = (
+        select([stock_alerts.c.stock_alert_id])
+        .select_from(
+            stocks.outerjoin(stock_alerts, stocks.c.stock_id == stock_alerts.c.stock_id)
+        )
+        .where(stocks.c.stock_id == new_stock_alert.stock_id)
+    )
     record = await database.fetch_one(query)
     if not record:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Stock {new_stock_alert.stock_id} doesn't exist",
+        )
+    if record[0]:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stock alert for stock {new_stock_alert.stock_id} already exists",
         )
     query = stock_alerts.insert().values(
         stock_alert_id=create_random_id(),
