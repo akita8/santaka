@@ -68,14 +68,14 @@ class TradedStock(NewStock):
     short_name: str
     fiscal_price_converted: Decimal
     profit_and_loss_converted: Decimal
+    invested_converted: Decimal
 
 
 class TradedStocks(BaseModel):
     stocks: List[TradedStock]
-    profit_and_loss: Decimal
-    invested: Decimal
-    current_ctv: Decimal
+    profit_and_loss_converted: Decimal
     current_ctv_converted: Decimal
+    invested_converted: Decimal
 
 
 class UpdatedStock(BaseModel):
@@ -169,10 +169,10 @@ class StockAlertToUpdate(BaseModel):
     disabled_fields: Optional[List[AlertFields]] = None
 
 
-class UpdatedCurrency(BaseModel):
+class Currency(BaseModel):
     iso_currency: str
     last_rate: Decimal
 
 
-class UpdatedCurrencies(BaseModel):
-    currencies: List[UpdatedCurrency]
+class Currencies(BaseModel):
+    currencies: List[Currency]

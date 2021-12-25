@@ -35,11 +35,11 @@ from santaka.stock.models import (
     TradedStocks,
     StockTransactionToDelete,
     StockTransactionToUpdate,
-    UpdatedCurrency,
+    Currency,
     UpdatedStocks,
     UpdatedStock,
     TransactionType,
-    UpdatedCurrencies,
+    Currencies,
 )
 from santaka.stock.utils import (
     YAHOO_FIELD_FINANCIAL_CURRENCY,
@@ -64,7 +64,6 @@ router = APIRouter(prefix="/stock", tags=["stock"])
 async def create_stock(new_stock: NewStock, user: User = Depends(get_current_user)):
     # query the database to check if stock already exists
     stock_symbol = new_stock.symbol.upper()
-    query = stocks.select().where(stocks.c.symbol == stock_symbol)
     stock_records = await get_stock_records(stock_symbol)
 
     # create response dict from body model
@@ -136,7 +135,19 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
     return stock
 
 
-@router.post("/currency/{currency_id}", response_model=UpdatedCurrency)
+@router.get("/currency/", response_model=Currencies)
+async def get_currencies(_: User = Depends(get_current_user)):
+    query = currency.select()
+    records = await database.fetch_all(query)
+    currencies = []
+    for record in records:
+        currencies.append(
+            {"iso_currency": record.iso_currency, "last_rate": record.last_rate}
+        )
+    return {"currencies": currencies}
+
+
+@router.post("/currency/{currency_id}", response_model=Currency)
 @database.transaction()
 async def update_currency(currency_id: int, user: User = Depends(get_current_user)):
     query = currency.select().where(currency.c.currency_id == currency_id)
@@ -157,7 +168,7 @@ async def update_currency(currency_id: int, user: User = Depends(get_current_use
     }
 
 
-@router.post("/currency/", response_model=UpdatedCurrencies)
+@router.post("/currency/", response_model=Currencies)
 async def update_currencies(user: User = Depends(get_current_user)):
     query = currency.select().where(currency.c.iso_currency != user.base_currency)
     symbol_records = await database.fetch_all(query)
@@ -426,21 +437,18 @@ async def get_traded_stocks(
     await get_owner(user.user_id, owner_id)
     records = await get_transaction_records([owner_id])
     traded_stocks = prepare_traded_stocks(records)
-    invested = 0
-    current_ctv = 0
-    profit_and_loss = 0
+    invested_converted = 0
+    profit_and_loss_converted = 0
     current_ctv_converted = 0
     for stock in traded_stocks:
-        invested += stock["invested"]
-        current_ctv += stock["current_ctv"]
-        profit_and_loss += stock["profit_and_loss"]
+        invested_converted += stock["invested_converted"]
+        profit_and_loss_converted += stock["profit_and_loss_converted"]
         current_ctv_converted += stock["current_ctv_converted"]
 
     return {
         "stocks": traded_stocks,
-        "invested": invested,
-        "current_ctv": current_ctv,
-        "profit_and_loss": profit_and_loss,
+        "invested_converted": invested_converted,
+        "profit_and_loss_converted": profit_and_loss_converted,
         "current_ctv_converted": current_ctv_converted,
     }
 

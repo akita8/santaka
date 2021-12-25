@@ -16,16 +16,20 @@ def calculate_profit_and_loss(
     return sold - invested
 
 
-def calculate_totals(
-    fiscal_price: Decimal,
-    last_price: Decimal,
-    quantity: int,
-    last_rate: Decimal,
-) -> Tuple[Decimal, Decimal, Decimal]:
+def calculate_invested(
+    fiscal_price: Decimal, fiscal_price_converted: Decimal, quantity: int
+) -> Tuple[Decimal, Decimal]:
     invested = quantity * fiscal_price
+    invested_converted = quantity * fiscal_price_converted
+    return invested, invested_converted
+
+
+def calculate_ctvs(
+    last_price: Decimal, last_rate: Decimal, quantity: int
+) -> Tuple[Decimal, Decimal]:
     current_ctv = quantity * last_price
     current_ctv_converted = current_ctv / last_rate
-    return invested, current_ctv, current_ctv_converted
+    return current_ctv, current_ctv_converted
 
 
 def calculate_fiscal_price(
@@ -62,35 +66,6 @@ def calculate_fiscal_price(
         quantity = split_events[split_index].factor * quantity
         split_index += 1
     return invested / quantity, invested_converted / quantity
-
-
-# class AlertService(santaka_grpc.AlertService):
-#     def CheckExpiration(self, request, *args):
-#         response = santaka_pb2.AlertResponse()
-#         expiration = datetime.fromtimestamp(request.expiration_date).date()
-#         current = datetime.fromtimestamp(request.current_date).date()
-#         if expiration - timedelta(2) <= current:
-#             response.message = "expired - less than 2 days from expiration date"
-#         return response
-
-#     def CheckPrice(self, request, *args):
-#         response = santaka_pb2.AlertResponse()
-#         if request.price <= 0 or request.last_price <= 0:
-#             response.error.message = (
-#                 "failed validation: price and last price must be greater than 0"
-#             )
-#             return response
-#         if (
-#             request.operation == santaka_pb2.Operation.SELL
-#             and request.last_price >= request.price
-#         ):
-#             response.message = "sell - current price is greater than price set"
-#         if (
-#             request.operation == santaka_pb2.Operation.BUY
-#             and request.last_price <= request.price
-#         ):
-#             response.message = "buy - current price is lower than price set"
-#         return response
 
 
 # class CouponYieldService(santaka_grpc.CouponYieldService):

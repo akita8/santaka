@@ -14,7 +14,8 @@ from sqlalchemy.sql import select
 from santaka.analytics import (
     calculate_fiscal_price,
     calculate_profit_and_loss,
-    calculate_totals,
+    calculate_invested,
+    calculate_ctvs,
 )
 from santaka.stock.models import (
     AlertFields,
@@ -147,7 +148,6 @@ async def call_yahoo_from_view(symbol: str):
 
 def validate_stock_transaction(records, transaction: NewStockTransaction):
     if not records and transaction.transaction_type == TransactionType.sell:
-        # fab:  >> if not << this sentence is the right way to identify an empty list
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="First transaction must be a buy",
@@ -423,6 +423,7 @@ def prepare_traded_stocks(
             current_ctv = 0
             current_ctv_converted = 0
             profit_and_loss_converted = 0
+            invested_converted = 0
             if current_quantity > 0:  # FIXME use fiscal price split aware quantity
                 fiscal_price, fiscal_price_converted = calculate_fiscal_price(
                     current_transactions
@@ -461,8 +462,15 @@ def prepare_traded_stocks(
                     commission_converted,
                     current_quantity,
                 )
-                invested, current_ctv, current_ctv_converted = calculate_totals(
-                    fiscal_price, last_price, current_quantity, last_rate
+                current_ctv, current_ctv_converted = calculate_ctvs(
+                    last_price,
+                    last_rate,
+                    current_quantity,
+                )
+                invested, invested_converted = calculate_invested(
+                    fiscal_price,
+                    fiscal_price_converted,
+                    current_quantity,
                 )
             traded_stocks.append(
                 {
@@ -481,6 +489,7 @@ def prepare_traded_stocks(
                     "short_name": previous_record[15],
                     "fiscal_price_converted": fiscal_price_converted,
                     "profit_and_loss_converted": profit_and_loss_converted,
+                    "invested_converted": invested_converted,
                 }
             )
             # here we are resetting the tax and qty to zero

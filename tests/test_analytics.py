@@ -150,7 +150,7 @@ from santaka.analytics import calculate_fiscal_price, calculate_profit_and_loss
             ),
             [(1598826422, 4)],
             D("69.7585"),
-            D("69.7585"),
+            D("69.7585"),  # AAPL stock and BG_Saxo account with an extra buy
         ),
         (
             (
