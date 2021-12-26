@@ -25,7 +25,7 @@ from santaka.stock.models import (
     TransactionType,
     Transaction,
 )
-from santaka.account import Bank
+from santaka.account.models import Bank
 from santaka.db import (
     database,
     stocks,
@@ -572,11 +572,11 @@ def check_upper_limit_price(last_price: Decimal, upper_limit: Decimal) -> bool:
 
 
 def check_fiscal_price_lower_than(last_price: Decimal, fiscal_price: Decimal) -> bool:
-    return last_price < fiscal_price
+    return last_price > fiscal_price
 
 
 def check_fiscal_price_greater_than(last_price: Decimal, fiscal_price: Decimal) -> bool:
-    return last_price > fiscal_price
+    return last_price < fiscal_price
 
 
 def check_profit_and_loss_upper_limit(limit: Decimal, profit_and_loss: Decimal) -> bool:

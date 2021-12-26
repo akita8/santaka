@@ -1,9 +1,5 @@
-from typing import List, Tuple
-from enum import Enum
-
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.sql import select
-from pydantic import BaseModel
 
 from santaka.db import (
     database,
@@ -13,83 +9,18 @@ from santaka.db import (
 )
 from santaka.user import User, get_current_user
 from santaka.db import create_random_id
+from santaka.account.utils import calculate_stock_total_ctv, get_owner
+from santaka.account.models import (
+    Account,
+    Accounts,
+    BANK_NAMES,
+    NewAccount,
+    NewOwner,
+    Owner,
+    OwnerDetails,
+)
 
 router = APIRouter(prefix="/account", tags=["account"])
-
-
-class Owner(BaseModel):
-    name: str
-    owner_id: int
-
-
-class NewOwner(BaseModel):
-    account_id: int
-    name: str
-
-
-class OwnerDetails(Owner):
-    bank_name: str
-    account_number: str
-
-
-class Bank(str, Enum):
-    FINECOBANK = "fineco"
-    BG_SAXO = "bg_saxo"
-    BANCA_GENERALI = "banca_generali"
-    CHE_BANCA = "che_banca"
-    IWBANK = "iwbank"
-
-
-BANK_NAMES = {
-    Bank.FINECOBANK.value: "FinecoBank",
-    Bank.BG_SAXO.value: "BG-Saxo",
-    Bank.BANCA_GENERALI.value: "Banca Generali",
-    Bank.CHE_BANCA.value: "Che Banca",
-    Bank.IWBANK.value: "IwBank",
-}
-
-
-class NewAccount(BaseModel):
-    bank: Bank
-    account_number: str
-
-
-class Account(NewAccount):
-    account_id: int
-    owners: List[Owner]
-    bank_name: str
-
-
-class Accounts(BaseModel):
-    accounts: List[Account]
-
-
-async def get_owner(user_id: int, owner_id: int) -> Tuple[int, str, str, int, str]:
-    # this query also checks that the owner exists
-    # and that it's linked to one of the users accounts
-    query = (
-        select(
-            [
-                accounts.c.account_id,
-                accounts.c.bank,
-                accounts.c.account_number,
-                owners.c.owner_id,
-                owners.c.fullname,
-            ]
-        )
-        .select_from(
-            accounts.join(owners, accounts.c.account_id == owners.c.account_id),
-        )
-        .where(accounts.c.user_id == user_id)
-        .where(owners.c.owner_id == owner_id)
-    )
-    record = await database.fetch_one(query)
-    if record is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Owner {owner_id} doesn't exist",
-        )
-    return record
 
 
 @router.put("/owner/", response_model=Owner)
@@ -133,6 +64,7 @@ async def create_account(
     account["account_id"] = account_id
     account["bank_name"] = BANK_NAMES[new_account.bank]
     account["owners"] = []
+    account["current_ctv_converted"] = 0
     return account
 
 
@@ -162,8 +94,10 @@ async def get_accounts(user: User = Depends(get_current_user)):
         if record[1] != previous_account_id:
             bank_name = BANK_NAMES[record[0]]
             owners_ = []
+            current_stock_ctv = 0
             if record[4] is not None:
                 owners_ = [{"name": record[3], "owner_id": record[4]}]
+                current_stock_ctv = await calculate_stock_total_ctv(record[4])
             account_models.append(
                 {
                     "bank": record[0],
@@ -171,11 +105,15 @@ async def get_accounts(user: User = Depends(get_current_user)):
                     "account_id": record[1],
                     "owners": owners_,
                     "bank_name": bank_name,
+                    "current_stock_ctv": current_stock_ctv,
                 }
             )
         else:
             account_models[-1]["owners"].append(
                 {"name": record[3], "owner_id": record[4]}
+            )
+            account_models[-1]["current_stock_ctv"] += await calculate_stock_total_ctv(
+                record[4]
             )
         previous_account_id = record[1]
 

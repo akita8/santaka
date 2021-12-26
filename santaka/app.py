@@ -4,7 +4,7 @@ from uvicorn import run
 
 from santaka.db import database
 from santaka.user import router as user_router
-from santaka.account import router as account_router
+from santaka.account.views import router as account_router
 from santaka.stock.views import router as stock_router
 
 app = FastAPI()

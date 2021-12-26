@@ -13,7 +13,7 @@ from santaka.stock.utils import (
     validate_stock_transaction,
 )
 from santaka.stock.models import NewStockTransaction, TransactionType
-from santaka.account import Bank
+from santaka.account.models import Bank
 
 
 class FakeRecord:

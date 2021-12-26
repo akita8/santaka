@@ -6,7 +6,7 @@ from pytest import mark, approx
 
 from santaka.stock.utils import YahooMarket, prepare_traded_stocks, TransactionRecords
 from santaka.stock.models import TransactionType
-from santaka.account import Bank
+from santaka.account.models import Bank
 
 from santaka.stock.utils import (
     check_dividend_date,
@@ -163,12 +163,12 @@ def test_check_dividend_date():
 
 def test_check_fiscal_price_lower_than():
     answer = check_fiscal_price_lower_than(Decimal("10"), Decimal("11"))
-    assert answer
+    assert answer is False
 
 
 def test_check_fiscal_price_greater_than():
     answer = check_fiscal_price_greater_than(Decimal("11"), Decimal("10"))
-    assert answer
+    assert answer is False
 
 
 def test_check_profit_and_loss_greater_than():

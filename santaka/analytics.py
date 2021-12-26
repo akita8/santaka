@@ -1,7 +1,12 @@
 from decimal import Decimal
 from typing import List, Optional, Tuple
 
-from santaka.stock.models import Transaction, TransactionType, SplitEvent
+from santaka.stock.models import (
+    TradedStock,
+    Transaction,
+    TransactionType,
+    SplitEvent,
+)
 
 
 def calculate_profit_and_loss(
@@ -30,6 +35,20 @@ def calculate_ctvs(
     current_ctv = quantity * last_price
     current_ctv_converted = current_ctv / last_rate
     return current_ctv, current_ctv_converted
+
+
+def calculate_stock_totals(
+    traded_stocks: List[TradedStock],
+) -> Tuple[Decimal, Decimal, Decimal]:
+    invested_converted = 0
+    profit_and_loss_converted = 0
+    current_ctv_converted = 0
+    for stock in traded_stocks:
+        invested_converted += stock["invested_converted"]
+        profit_and_loss_converted += stock["profit_and_loss_converted"]
+        current_ctv_converted += stock["current_ctv_converted"]
+
+    return invested_converted, profit_and_loss_converted, current_ctv_converted
 
 
 def calculate_fiscal_price(

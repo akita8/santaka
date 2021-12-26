@@ -1,4 +1,5 @@
 from datetime import datetime
+from santaka.analytics import calculate_stock_totals
 
 from fastapi import status, HTTPException, Depends, APIRouter
 from sqlalchemy.sql import select
@@ -15,7 +16,7 @@ from santaka.db import (
     owners,
 )
 from santaka.user import User, get_current_user
-from santaka.account import get_owner
+from santaka.account.utils import get_owner
 from santaka.stock.models import (
     NewStock,
     NewStockAlert,
@@ -431,20 +432,14 @@ async def get_traded_stocks(
     owner_id: int,
     user: User = Depends(get_current_user),
 ):
-    # FIXME invested and profit_and_loss totals do not make sense as they are
-    # calculated now, they need to take account of exchange rates.
-    #  Current_ctv is just wrong and needs to be removed
     await get_owner(user.user_id, owner_id)
     records = await get_transaction_records([owner_id])
     traded_stocks = prepare_traded_stocks(records)
-    invested_converted = 0
-    profit_and_loss_converted = 0
-    current_ctv_converted = 0
-    for stock in traded_stocks:
-        invested_converted += stock["invested_converted"]
-        profit_and_loss_converted += stock["profit_and_loss_converted"]
-        current_ctv_converted += stock["current_ctv_converted"]
-
+    (
+        invested_converted,
+        profit_and_loss_converted,
+        current_ctv_converted,
+    ) = calculate_stock_totals(traded_stocks)
     return {
         "stocks": traded_stocks,
         "invested_converted": invested_converted,
