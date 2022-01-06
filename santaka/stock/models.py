@@ -166,7 +166,6 @@ class StockAlertToUpdate(BaseModel):
     fiscal_price_greater_than: Optional[bool] = None
     profit_and_loss_lower_limit: Optional[Decimal] = None
     profit_and_loss_upper_limit: Optional[Decimal] = None
-    disabled_fields: Optional[List[AlertFields]] = None
 
 
 class Currency(BaseModel):

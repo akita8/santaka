@@ -677,3 +677,13 @@ async def get_stock_records(*symbols: str):
             stocks.c.symbol.in_(symbols),
         )
     return await database.fetch_all(query)
+
+
+async def get_alert_or_raise(stock_id: int, owner_id: int):
+    alerts = await check_stock_alerts(stock_id, owner_id)
+    if len(alerts) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Alert for owner {owner_id} stock {stock_id} doesn't exist",
+        )
+    return alerts[0]

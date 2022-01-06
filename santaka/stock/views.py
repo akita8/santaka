@@ -45,6 +45,7 @@ from santaka.stock.models import (
 from santaka.stock.utils import (
     YAHOO_FIELD_FINANCIAL_CURRENCY,
     call_yahoo_from_view,
+    get_alert_or_raise,
     get_stock_records,
     get_yahoo_quote,
     validate_stock_transaction,
@@ -577,6 +578,7 @@ async def create_stock_alert(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Stock {new_stock_alert.stock_id} doesn't exist",
         )
+    print(record)
     if record[0]:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -594,21 +596,29 @@ async def create_stock_alert(
         profit_and_loss_lower_limit=new_stock_alert.profit_and_loss_lower_limit,
         profit_and_loss_upper_limit=new_stock_alert.profit_and_loss_upper_limit,
     )
-    stock_alert_id = await database.execute(query)
-    stock_alert = new_stock_alert.dict()
-    stock_alert["stock_alert_id"] = stock_alert_id
-    return stock_alert
+    await database.execute(query)
+
+    return await get_alert_or_raise(new_stock_alert.stock_id, new_stock_alert.owner_id)
 
 
-@router.get("/alert/{owner_id}", response_model=StockAlerts)
-@database.transaction()
-async def get_stock_alert(
+@router.get("/alert/{owner_id}/", response_model=StockAlerts)
+async def get_stock_alerts(
     owner_id: int,
     user: User = Depends(get_current_user),
 ):
     await get_owner(user.user_id, owner_id)
     alerts = {"alerts": await check_stock_alerts(owner_id=owner_id)}
     return alerts
+
+
+@router.get("/alert/{owner_id}/{stock_id}/", response_model=StockAlert)
+async def get_stock_alert(
+    owner_id: int,
+    stock_id: int,
+    user: User = Depends(get_current_user),
+):
+    await get_owner(user.user_id, owner_id)
+    return await get_alert_or_raise(stock_id, owner_id)
 
 
 @router.delete("/alert")
@@ -622,7 +632,7 @@ async def delete_stock_alert(
     record = await database.fetch_one(query)
     if not record:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Stock alert {alert.stock_alert_id} doesn't exist",
         )
     query = stock_alerts.delete().where(
@@ -646,24 +656,20 @@ async def update_stock_alert(
             detail=f"Stock alert {alert.stock_alert_id} doesn't exist",
         )
     alert_dict = alert.dict()
-    disabled_fields = alert_dict.pop("disabled_fields")
     values = {}
     for key in alert_dict:
-        if alert_dict[key] is not None and key != "stock_alert_id":
+        if key != "stock_alert_id":
             values[key] = alert_dict[key]
-    if disabled_fields:
-        for field in disabled_fields:
-            values[field] = None
-    if not values:
-        return
-    query = (
-        stock_alerts.update()
-        .where(stock_alerts.c.stock_alert_id == alert.stock_alert_id)
-        .values(**values)
-    )
-    await database.execute(query)
+    if values:
+        query = (
+            stock_alerts.update()
+            .where(stock_alerts.c.stock_alert_id == alert.stock_alert_id)
+            .values(**values)
+        )
+        await database.execute(query)
+    return await get_alert_or_raise(record.stock_id, record.owner_id)
 
 
 # TODO Refactor create stock dividing in in different views:
 #      one to get stock (from db or yahoo), one to create stock,
-#      one to get currency, one to create currencys
+#      one to get currency, one to create currencies
