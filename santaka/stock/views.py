@@ -113,7 +113,7 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
             symbol=stock_symbol,
             last_price=stock_info[YAHOO_FIELD_PRICE],
             last_update=datetime.utcnow(),
-            financial_currency=stock_info[YAHOO_FIELD_FINANCIAL_CURRENCY],
+            financial_currency=stock_info.get(YAHOO_FIELD_FINANCIAL_CURRENCY),
         )
         stock_id = await database.execute(query)
         stock["short_name"] = stock_info[YAHOO_FIELD_NAME]
@@ -566,24 +566,25 @@ async def create_stock_alert(
         )
 
     query = (
-        select([stock_alerts.c.stock_alert_id])
+        select([stock_alerts.c.stock_alert_id, stock_alerts.c.owner_id])
         .select_from(
             stocks.outerjoin(stock_alerts, stocks.c.stock_id == stock_alerts.c.stock_id)
         )
         .where(stocks.c.stock_id == new_stock_alert.stock_id)
     )
-    record = await database.fetch_one(query)
-    if not record:
+    records = await database.fetch_all(query)
+    if not records:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Stock {new_stock_alert.stock_id} doesn't exist",
         )
-    print(record)
-    if record[0]:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Stock alert for stock {new_stock_alert.stock_id} already exists",
-        )
+    for record in records:
+        if record[0] and record[1] == new_stock_alert.owner_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Stock alert for stock "
+                "{new_stock_alert.stock_id} already exists",
+            )
     query = stock_alerts.insert().values(
         stock_alert_id=create_random_id(),
         stock_id=new_stock_alert.stock_id,

@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List
+from typing import List, Optional
 from enum import Enum
 from pydantic import BaseModel
 
@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class Owner(BaseModel):
     name: str
     owner_id: int
+    has_triggered_alerts: Optional[bool]
 
 
 class NewOwner(BaseModel):

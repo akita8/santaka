@@ -9,7 +9,11 @@ from santaka.db import (
 )
 from santaka.user import User, get_current_user
 from santaka.db import create_random_id
-from santaka.account.utils import calculate_stock_total_ctv, get_owner
+from santaka.account.utils import (
+    calculate_stock_total_ctv,
+    get_owner,
+    check_for_triggered_alerts,
+)
 from santaka.account.models import (
     Account,
     Accounts,
@@ -96,7 +100,15 @@ async def get_accounts(user: User = Depends(get_current_user)):
             owners_ = []
             current_stock_ctv = 0
             if record[4] is not None:
-                owners_ = [{"name": record[3], "owner_id": record[4]}]
+                owners_ = [
+                    {
+                        "name": record[3],
+                        "owner_id": record[4],
+                        "has_triggered_alerts": await check_for_triggered_alerts(
+                            record[4]
+                        ),
+                    }
+                ]
                 current_stock_ctv = await calculate_stock_total_ctv(record[4])
             account_models.append(
                 {
@@ -110,7 +122,11 @@ async def get_accounts(user: User = Depends(get_current_user)):
             )
         else:
             account_models[-1]["owners"].append(
-                {"name": record[3], "owner_id": record[4]}
+                {
+                    "name": record[3],
+                    "owner_id": record[4],
+                    "has_triggered_alerts": await check_for_triggered_alerts(record[4]),
+                }
             )
             account_models[-1]["current_stock_ctv"] += await calculate_stock_total_ctv(
                 record[4]

@@ -65,7 +65,7 @@ stocks = sqlalchemy.Table(
     sqlalchemy.Column(
         "financial_currency",
         sqlalchemy.String,
-        nullable=False,
+        nullable=True,
     ),
     sqlalchemy.Column(
         "short_name",

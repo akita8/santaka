@@ -9,7 +9,11 @@ from santaka.db import (
     owners,
 )
 from santaka.analytics import calculate_stock_totals
-from santaka.stock.utils import get_transaction_records, prepare_traded_stocks
+from santaka.stock.utils import (
+    check_stock_alerts,
+    get_transaction_records,
+    prepare_traded_stocks,
+)
 
 
 async def get_owner(user_id: int, owner_id: int) -> Tuple[int, str, str, int, str]:
@@ -45,3 +49,11 @@ async def calculate_stock_total_ctv(owner_id: int):
     traded_stocks = prepare_traded_stocks(records)
     _, _, current_stock_ctv = calculate_stock_totals(traded_stocks)
     return current_stock_ctv
+
+
+async def check_for_triggered_alerts(owner_id: int) -> bool:
+    alerts = await check_stock_alerts(owner_id=owner_id)
+    for a in alerts:
+        if len(a["triggered_fields"]) > 0:
+            return True
+    return False
