@@ -11,7 +11,7 @@ from pytz import timezone, utc
 from sqlalchemy import asc
 from sqlalchemy.sql import select
 
-from santaka.analytics import (
+from santaka.stock.analytics import (
     calculate_fiscal_price,
     calculate_profit_and_loss,
     calculate_invested,

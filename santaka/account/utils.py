@@ -8,7 +8,7 @@ from santaka.db import (
     accounts,
     owners,
 )
-from santaka.analytics import calculate_stock_totals
+from santaka.stock.analytics import calculate_stock_totals
 from santaka.stock.utils import (
     check_stock_alerts,
     get_transaction_records,

@@ -7,6 +7,8 @@ from santaka.user import router as user_router
 from santaka.account.views import router as account_router
 from santaka.stock.views import router as stock_router
 
+# from santaka.bond.views import router as bond_router
+
 app = FastAPI()
 
 app.add_middleware(
@@ -20,6 +22,7 @@ app.add_middleware(
 app.include_router(user_router)
 app.include_router(account_router)
 app.include_router(stock_router)
+# app.include_router(bond_router)
 
 
 @app.on_event("startup")

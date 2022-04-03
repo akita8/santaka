@@ -1,5 +1,4 @@
 from datetime import datetime
-from santaka.analytics import calculate_stock_totals
 
 from fastapi import status, HTTPException, Depends, APIRouter
 from sqlalchemy.sql import select
@@ -57,6 +56,7 @@ from santaka.stock.utils import (
     YAHOO_FIELD_PRICE,
     YAHOO_FIELD_NAME,
 )
+from santaka.stock.analytics import calculate_stock_totals
 
 router = APIRouter(prefix="/stock", tags=["stock"])
 
