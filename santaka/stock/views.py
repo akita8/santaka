@@ -43,6 +43,7 @@ from santaka.stock.models import (
 )
 from santaka.stock.utils import (
     YAHOO_FIELD_FINANCIAL_CURRENCY,
+    YAHOO_FIELD_LONG_NAME,
     call_yahoo_from_view,
     get_alert_or_raise,
     get_stock_records,
@@ -103,11 +104,11 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
         else:
             # if currency exists just save the id (needed for stock creation)
             currency_id = currency_record.currency_id
-
+        name = stock_info.get(YAHOO_FIELD_NAME, stock_info[YAHOO_FIELD_LONG_NAME])
         # create stock record
         query = stocks.insert().values(
             stock_id=create_random_id(),
-            short_name=stock_info[YAHOO_FIELD_NAME],
+            short_name=name,
             currency_id=currency_id,
             market=stock_info[YAHOO_FIELD_MARKET],
             symbol=stock_symbol,
@@ -116,7 +117,7 @@ async def create_stock(new_stock: NewStock, user: User = Depends(get_current_use
             financial_currency=stock_info.get(YAHOO_FIELD_FINANCIAL_CURRENCY),
         )
         stock_id = await database.execute(query)
-        stock["short_name"] = stock_info[YAHOO_FIELD_NAME]
+        stock["short_name"] = name
         stock["iso_currency"] = iso_currency
         stock["currency_id"] = currency_id
         stock["market"] = stock_info[YAHOO_FIELD_MARKET]

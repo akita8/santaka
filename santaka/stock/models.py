@@ -4,7 +4,7 @@ from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class NewStock(BaseModel):
@@ -28,17 +28,24 @@ class Stocks(BaseModel):
 class TransactionType(str, Enum):
     buy = "buy"
     sell = "sell"
+    dividend = "dividend"
 
 
 class Transaction(BaseModel):
+    transaction_type: TransactionType
     price: Decimal = Field(gt=0)
-    quantity: int = Field(gt=0)
+    quantity: int
     tax: Decimal = 0
     commission: Decimal = 0
     date: datetime
-    transaction_type: TransactionType
     transaction_note: Optional[str] = None
     transaction_ex_rate: Optional[Decimal] = None
+
+    @validator("quantity")
+    def validate_quantity(cls, v, values):
+        if values["transaction_type"] != TransactionType.dividend and v <= 0:
+            raise ValueError("quantity must be greater than 0")
+        return v
 
 
 class NewStockTransaction(Transaction):
@@ -69,6 +76,8 @@ class TradedStock(NewStock):
     fiscal_price_converted: Decimal
     profit_and_loss_converted: Decimal
     invested_converted: Decimal
+    current_status: Decimal
+    current_status_converted: Decimal
 
 
 class TradedStocks(BaseModel):

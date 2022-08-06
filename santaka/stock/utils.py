@@ -16,6 +16,7 @@ from santaka.stock.analytics import (
     calculate_profit_and_loss,
     calculate_invested,
     calculate_ctvs,
+    calculate_status,
 )
 from santaka.stock.models import (
     AlertFields,
@@ -44,6 +45,7 @@ YAHOO_FIELD_FINANCIAL_CURRENCY = "financialCurrency"
 YAHOO_FIELD_MARKET = "fullExchangeName"
 YAHOO_FIELD_CURRENCY = "currency"
 YAHOO_FIELD_NAME = "shortName"
+YAHOO_FIELD_LONG_NAME = "longName"
 YAHOO_UPDATE_COOLDOWN = environ.get("YAHOO_UPDATE_COOLDOWN", 60 * 5)
 YAHOO_UPDATE_DELTA = 60 * 60
 
@@ -115,6 +117,7 @@ async def get_yahoo_quote(symbols: List[str]) -> Dict[str, Any]:
                         YAHOO_FIELD_MARKET,
                         YAHOO_FIELD_NAME,
                         YAHOO_FIELD_FINANCIAL_CURRENCY,
+                        YAHOO_FIELD_LONG_NAME,
                     ]
                 ),
             },
@@ -424,6 +427,8 @@ def prepare_traded_stocks(
             current_ctv_converted = 0
             profit_and_loss_converted = 0
             invested_converted = 0
+            current_status = 0  # status
+            current_status_converted = 0  # status
             if current_quantity > 0:  # FIXME use fiscal price split aware quantity
                 fiscal_price, fiscal_price_converted = calculate_fiscal_price(
                     current_transactions
@@ -472,6 +477,11 @@ def prepare_traded_stocks(
                     fiscal_price_converted,
                     current_quantity,
                 )
+                current_status, current_status_converted = calculate_status(
+                    current_transactions,
+                    last_price,
+                    last_rate,
+                )
             traded_stocks.append(
                 {
                     "stock_id": previous_record[0],
@@ -490,6 +500,8 @@ def prepare_traded_stocks(
                     "fiscal_price_converted": fiscal_price_converted,
                     "profit_and_loss_converted": profit_and_loss_converted,
                     "invested_converted": invested_converted,
+                    "current_status": current_status,  # status
+                    "current_status_converted": current_status_converted,  # status
                 }
             )
             # here we are resetting the tax and qty to zero
@@ -505,6 +517,7 @@ def prepare_traded_stocks(
                     commission=record[9],
                     date=record[10],
                     transaction_ex_rate=record[16],
+                    tax=record[11],
                 )
             )
             if record[6] == TransactionType.buy.value:
