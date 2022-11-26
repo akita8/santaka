@@ -477,11 +477,11 @@ def prepare_traded_stocks(
                     fiscal_price_converted,
                     current_quantity,
                 )
-                current_status, current_status_converted = calculate_status(
-                    current_transactions,
-                    last_price,
-                    last_rate,
-                )
+            current_status, current_status_converted = calculate_status(
+                current_transactions,
+                last_price,
+                last_rate,
+            )
             traded_stocks.append(
                 {
                     "stock_id": previous_record[0],
@@ -500,8 +500,8 @@ def prepare_traded_stocks(
                     "fiscal_price_converted": fiscal_price_converted,
                     "profit_and_loss_converted": profit_and_loss_converted,
                     "invested_converted": invested_converted,
-                    "current_status": current_status,  # status
-                    "current_status_converted": current_status_converted,  # status
+                    "current_status": current_status,
+                    "current_status_converted": current_status_converted,
                 }
             )
             # here we are resetting the tax and qty to zero

@@ -441,12 +441,14 @@ async def get_traded_stocks(
         invested_converted,
         profit_and_loss_converted,
         current_ctv_converted,
+        current_status_converted,
     ) = calculate_stock_totals(traded_stocks)
     return {
         "stocks": traded_stocks,
         "invested_converted": invested_converted,
         "profit_and_loss_converted": profit_and_loss_converted,
         "current_ctv_converted": current_ctv_converted,
+        "current_status_converted": current_status_converted,
     }
 
 

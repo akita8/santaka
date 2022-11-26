@@ -85,6 +85,7 @@ class TradedStocks(BaseModel):
     profit_and_loss_converted: Decimal
     current_ctv_converted: Decimal
     invested_converted: Decimal
+    current_status_converted: Decimal
 
 
 class UpdatedStock(BaseModel):
@@ -106,14 +107,23 @@ class StockTransactionToDelete(BaseModel):
 
 
 class StockTransactionToUpdate(BaseModel):
+    transaction_type: TransactionType
     stock_transaction_id: int
     price: Optional[Decimal] = Field(gt=0, default=None)
-    quantity: Optional[int] = Field(gt=0, default=None)
+    quantity: int
     tax: Optional[Decimal] = None
     commission: Optional[Decimal] = None
     date: Optional[datetime] = None
     transaction_note: Optional[str] = None
     transaction_ex_rate: Optional[Decimal] = None
+    # TODO porta  a fattor comune con transaction
+
+    @validator("quantity")
+    def validate_quantity(cls, v, values):
+        print(values)
+        if values["transaction_type"] != TransactionType.dividend and v <= 0:
+            raise ValueError("quantity must be greater than 0")
+        return v
 
 
 class StockTransactionsToMove(BaseModel):

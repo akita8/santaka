@@ -47,7 +47,7 @@ async def get_owner(user_id: int, owner_id: int) -> Tuple[int, str, str, int, st
 async def calculate_stock_total_ctv(owner_id: int):
     records = await get_transaction_records([owner_id])
     traded_stocks = prepare_traded_stocks(records)
-    _, _, current_stock_ctv = calculate_stock_totals(traded_stocks)
+    _, _, current_stock_ctv, _ = calculate_stock_totals(traded_stocks)
     return current_stock_ctv
 
 

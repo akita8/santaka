@@ -39,16 +39,23 @@ def calculate_ctvs(
 
 def calculate_stock_totals(
     traded_stocks: List[TradedStock],
-) -> Tuple[Decimal, Decimal, Decimal]:
+) -> Tuple[Decimal, Decimal, Decimal, Decimal]:
     invested_converted = 0
     profit_and_loss_converted = 0
     current_ctv_converted = 0
+    current_status_converted = 0
     for stock in traded_stocks:
         invested_converted += stock["invested_converted"]
         profit_and_loss_converted += stock["profit_and_loss_converted"]
         current_ctv_converted += stock["current_ctv_converted"]
+        current_status_converted += stock["current_status_converted"]
 
-    return invested_converted, profit_and_loss_converted, current_ctv_converted
+    return (
+        invested_converted,
+        profit_and_loss_converted,
+        current_ctv_converted,
+        current_status_converted,
+    )
 
 
 def calculate_fiscal_price(
